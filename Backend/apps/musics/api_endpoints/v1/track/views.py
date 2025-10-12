@@ -11,14 +11,50 @@ from .serializers import (
 )
 from .utils import optimize_track_queryset
 from .pagination import SmallResultsSetPagination
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse
 from .permissions import IsOwnerOrReadOnly
 
 
 @extend_schema_view(
-    list=extend_schema(summary="Get all tracks"),
-    retrieve=extend_schema(summary="Get track details"),
-    create=extend_schema(summary="Create a new track"),
+    list=extend_schema(
+        tags=["Tracks"],
+        summary="Get all tracks",
+        description="Retrieve a list of all published tracks.",
+        responses={200: TrackListSerializer(many=True)},
+    ),
+    retrieve=extend_schema(
+        tags=["Tracks"],
+        summary="Get track details",
+        description="Retrieve detailed information about a specific track by ID.",
+        responses={200: TrackDetailSerializer},
+    ),
+    create=extend_schema(
+        tags=["Tracks"],
+        summary="Create a new track",
+        description="Create and add a new track to the system.",
+        request=TrackCreateUpdateSerializer,
+        responses={201: TrackDetailSerializer},
+    ),
+    update=extend_schema(
+        tags=["Tracks"],
+        summary="Update track",
+        description="Update an existing track by ID.",
+        request=TrackCreateUpdateSerializer,
+        responses={200: TrackDetailSerializer},
+    ),
+    partial_update=extend_schema(
+        tags=["Tracks"],
+        summary="Partially update track",
+        description="Update some fields of an existing track by ID.",
+        request=TrackCreateUpdateSerializer,
+        responses={200: TrackDetailSerializer},
+    ),
+    destroy=extend_schema(
+        tags=["Tracks"],
+        summary="Delete track",
+        description="Delete an existing track by ID.",
+        responses={204: OpenApiResponse(description="Track successfully deleted")},
+    ),
 )
 class TrackViewSet(ModelViewSet):
     queryset = Track.objects.all()

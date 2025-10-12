@@ -8,15 +8,21 @@ User = get_user_model()
 
 
 class ArtistAPITestCase(APITestCase):
+    """Тесты для Artist API (полный CRUD + доступы + вложенные данные)."""
+
     def setUp(self):
         # Создаём суперпользователя для CRUD
         self.admin = User.objects.create_superuser(
             username="admin", email="admin@example.com", password="adminpass"
         )
-        # Публичный артист
-        self.artist = Artist.objects.create(name="Test Artist")
+
+        # Публичный артист (по умолчанию is_published=True, если есть)
+        self.artist = Artist.objects.create(name="Test Artist", owner=self.admin)
+
         # Альбом и трек для детального теста
-        self.album = Album.objects.create(name="Test Album", artist=self.artist, owner=self.admin)
+        self.album = Album.objects.create(
+            name="Test Album", artist=self.artist, owner=self.admin
+        )
         self.track = Track.objects.create(
             owner=self.admin,
             name="Test Track",
@@ -27,28 +33,27 @@ class ArtistAPITestCase(APITestCase):
 
         # URL
         self.list_url = reverse("artist-list")  # /artists/
-        self.detail_url = reverse(
-            "artist-detail", args=[self.artist.slug]
-        )  # /artists/<slug>/
+        self.detail_url = reverse("artist-detail", args=[self.artist.slug])  # /artists/<slug>/
 
     # ---------------- LIST ----------------
     def test_artist_list_anon(self):
-        """Тестируем получение списка артистов анонимным пользователем"""
+        """Аноним может видеть список артистов"""
 
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("name", response.data[0])
+        self.assertIn("albums_count", response.data[0])
 
     def test_artist_list_search(self):
-        """Тестируем поиск артистов"""
+        """Поиск артистов по имени"""
 
         response = self.client.get(self.list_url, {"search": "Test"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(len(response.data) > 0)
+        self.assertGreater(len(response.data), 0)
 
     # ---------------- RETRIEVE ----------------
     def test_artist_retrieve(self):
-        """Тестируем получение детальной информации об артисте"""
+        """Аноним может видеть детали артиста с альбомами и треками"""
 
         response = self.client.get(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -59,7 +64,7 @@ class ArtistAPITestCase(APITestCase):
 
     # ---------------- CREATE ----------------
     def test_artist_create_admin(self):
-        """Тестируем создание артиста админом"""
+        """Админ может создать артиста"""
 
         self.client.force_authenticate(user=self.admin)
         data = {"name": "New Artist"}
@@ -68,7 +73,7 @@ class ArtistAPITestCase(APITestCase):
         self.assertEqual(Artist.objects.count(), 2)
 
     def test_artist_create_anon(self):
-        """Тестируем создание артиста анонимом (должно быть запрещено)"""
+        """Аноним не может создать артиста"""
 
         data = {"name": "New Artist"}
         response = self.client.post(self.list_url, data)
@@ -76,7 +81,7 @@ class ArtistAPITestCase(APITestCase):
 
     # ---------------- UPDATE ----------------
     def test_artist_update_admin(self):
-        """Тестируем полное обновление артиста админом"""
+        """Админ может полностью обновить артиста"""
 
         self.client.force_authenticate(user=self.admin)
         data = {"name": "Updated Artist"}
@@ -86,7 +91,7 @@ class ArtistAPITestCase(APITestCase):
         self.assertEqual(self.artist.name, "Updated Artist")
 
     def test_artist_partial_update_admin(self):
-        """Тестируем частичное обновление артиста админом"""
+        """Админ может частично обновить артиста"""
 
         self.client.force_authenticate(user=self.admin)
         data = {"bio": "New bio"}
@@ -96,7 +101,7 @@ class ArtistAPITestCase(APITestCase):
         self.assertEqual(self.artist.bio, "New bio")
 
     def test_artist_update_anon(self):
-        """Тестируем обновление артиста анонимом (должно быть запрещено)"""
+        """Аноним не может обновлять артиста"""
 
         data = {"name": "Hacker Artist"}
         response = self.client.put(self.detail_url, data)
@@ -104,7 +109,7 @@ class ArtistAPITestCase(APITestCase):
 
     # ---------------- DELETE ----------------
     def test_artist_delete_admin(self):
-        """Тестируем удаление артиста админом"""
+        """Админ может удалить артиста"""
 
         self.client.force_authenticate(user=self.admin)
         response = self.client.delete(self.detail_url)
@@ -112,7 +117,7 @@ class ArtistAPITestCase(APITestCase):
         self.assertFalse(Artist.objects.filter(id=self.artist.id).exists())
 
     def test_artist_delete_anon(self):
-        """Тестируем удаление артиста анонимом (должно быть запрещено)"""
+        """Аноним не может удалить артиста"""
 
         response = self.client.delete(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

@@ -1,6 +1,6 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse
 
 from apps.musics.models import Like, ListeningHistory
 from .serializers import LikeSerializer, ListeningHistorySerializer
@@ -10,20 +10,24 @@ from .pagination import SmallResultsSetPagination
 
 @extend_schema_view(
     list=extend_schema(
-        summary="Get all liked tracks",
-        description="Retrieve a list of all tracks liked by the authenticated user.",
+        tags=["Likes"],
+        summary="Get user likes",
+        description="Retrieve a list of all tracks the authenticated user has liked (most recent first).",
         responses={200: LikeSerializer(many=True)},
     ),
     create=extend_schema(
+        tags=["Likes"],
         summary="Like a track",
-        description="Add a track to the authenticated user's liked list.",
+        description="Add a track to the authenticated user's likes.",
         responses={201: LikeSerializer},
     ),
     destroy=extend_schema(
+        tags=["Likes"],
         summary="Unlike a track",
-        description="Remove a track from the authenticated user's liked list.",
-        responses={204: None},
+        description="Remove a track from the authenticated user's likes.",
+        responses={204: OpenApiResponse(description="No Content")},
     ),
+    
 )
 class LikeViewSet(ModelViewSet):
     serializer_class = LikeSerializer
@@ -40,11 +44,13 @@ class LikeViewSet(ModelViewSet):
 
 @extend_schema_view(
     list=extend_schema(
+        tags=["Listening History"],
         summary="Get listening history",
         description="Retrieve a list of all tracks the authenticated user has listened to (most recent first).",
         responses={200: ListeningHistorySerializer(many=True)},
     ),
     create=extend_schema(
+        tags=["Listening History"],
         summary="Add listening record",
         description="Add a track to the authenticated user's listening history.",
         responses={201: ListeningHistorySerializer},

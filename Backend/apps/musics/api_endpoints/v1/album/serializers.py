@@ -1,21 +1,20 @@
-from rest_framework.serializers import ModelSerializer
+from rest_framework import serializers
 from apps.musics.models import Album, Track, Artist
 
 
-class AlbumListSerializer(ModelSerializer):
+class AlbumListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Album
         fields = ("id", "name", "slug", "cover")
 
 
-class ArtistSerializer(ModelSerializer):
+class ArtistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Artist
-        fields = ("id", "name", "slug", "bio", "avatar", "meta")
+        fields = ("id", "name", "slug", "owner", "bio", "avatar", "meta")
 
 
-class TrackSerializer(ModelSerializer):
-    
+class TrackSerializer(serializers.ModelSerializer):
     class Meta:
         model = Track
         fields = (
@@ -32,10 +31,10 @@ class TrackSerializer(ModelSerializer):
         )
 
 
-class AlbumDetailSerializer(ModelSerializer):
+class AlbumDetailSerializer(serializers.ModelSerializer):
     tracks = TrackSerializer(many=True, read_only=True)
     artist = ArtistSerializer(read_only=True)
-    
+
     class Meta:
         model = Album
         fields = (
@@ -52,7 +51,26 @@ class AlbumDetailSerializer(ModelSerializer):
             "updated_at",
         )
 
-class ALbumCreateUpdateSerializer(ModelSerializer):
+
+class AlbumCreateUpdateSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания и обновления альбома."""
+
     class Meta:
         model = Album
-        fields = ("name", "owner", "artist", "release_date", "cover", "is_published")
+        fields = ("name", "artist", "release_date", "cover", "is_published")
+        read_only_fields = ("id", "slug")
+
+    def create(self, validated_data):
+        """Автоматически проставляем владельца альбома."""
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            validated_data["owner"] = request.user
+        return super().create(validated_data)
+
+__all__ = [
+    "AlbumListSerializer",
+    "AlbumDetailSerializer",
+    "AlbumCreateUpdateSerializer",
+    "TrackSerializer",
+    "ArtistSerializer",
+]

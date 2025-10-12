@@ -31,7 +31,8 @@ class RegisterAPITestCase(APITestCase):
         self.assertEqual(user.email, data["email"])
 
         # Check user attributes
-        self.assertFalse(user.is_active)
+        self.assertTrue(user.is_active)
+        self.assertFalse(user.is_email_verified)
         self.assertFalse(user.is_superuser)
         self.assertFalse(user.is_staff)
 

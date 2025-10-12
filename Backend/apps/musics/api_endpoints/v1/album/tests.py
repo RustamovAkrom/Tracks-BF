@@ -31,6 +31,7 @@ class AlbumAPITestCase(APITestCase):
 
         url = reverse("album-list")  # /musics/albums/
         response = self.client.get(url)
+        
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Проверяем, что видим только опубликованные
         self.assertEqual(len(response.data), 1)

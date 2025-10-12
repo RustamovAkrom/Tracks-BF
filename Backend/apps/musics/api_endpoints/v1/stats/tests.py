@@ -17,7 +17,7 @@ class StatsAPITestCase(APITestCase):
         )
 
         # Треки
-        self.artist = Artist.objects.create(name="Artist 1")
+        self.artist = Artist.objects.create(name="Artist 1", owner=self.user)
         self.track1 = Track.objects.create(
             owner=self.user, name="Track 1", artist=self.artist, duration=120
         )

@@ -16,7 +16,7 @@ class PlaylistAPITestCase(APITestCase):
             username="other", email="other@example.com", password="pass123"
         )
 
-        self.artist = Artist.objects.create(name="Artist 1")
+        self.artist = Artist.objects.create(name="Artist 1", owner=self.user)
 
         self.track1 = Track.objects.create(
             name="Track 1", owner=self.user, duration=120, artist=self.artist
@@ -68,7 +68,7 @@ class PlaylistAPITestCase(APITestCase):
         """Тестируем создание плейлиста анонимным пользователем - должно быть запрещено"""
         data = {"name": "New Playlist"}
         response = self.client.post(self.list_url, data)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_playlist_update_auth_owner(self):
         """Тестируем обновление плейлиста авторизованным владельцем"""

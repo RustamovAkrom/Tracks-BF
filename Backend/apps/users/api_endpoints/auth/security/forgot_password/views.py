@@ -20,7 +20,7 @@ class ForgotPasswordAPIView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = ForgotPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        email = serializer.context.get("email")
+        email = serializer.validated_data.get("email")
         if not email:
             return Response(
                 {"detail": "Email is required"},

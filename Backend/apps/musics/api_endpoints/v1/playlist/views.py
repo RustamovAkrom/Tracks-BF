@@ -1,6 +1,7 @@
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 from django.db.models import Count
 from apps.musics.models import Playlist
 from .serializers import (
@@ -10,7 +11,7 @@ from .serializers import (
 )
 from .utils import optimize_playlist_queryset
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse
-from .permisions import IsOwnerOrReadOnly
+from apps.shared.permissions import IsOwnerOrReadOnly
 
 
 @extend_schema_view(
@@ -23,7 +24,7 @@ from .permisions import IsOwnerOrReadOnly
     retrieve=extend_schema(
         tags=["Playlists"],
         summary="Get playlist details",
-        description="Retrieve detailed information about a specific playlist by ID.",
+        description="Retrieve detailed information about a specific playlist by slug.",
         responses={200: PlaylistDetailSerializer},
     ),
     create=extend_schema(
@@ -36,26 +37,30 @@ from .permisions import IsOwnerOrReadOnly
     update=extend_schema(
         tags=["Playlists"],
         summary="Update playlist",
-        description="Update an existing playlist by ID.",
+        description="Update an existing playlist by slug.",
         request=PlaylistCreateUpdateSerializer,
         responses={200: PlaylistDetailSerializer},
     ),
     partial_update=extend_schema(
         tags=["Playlists"],
         summary="Partially update playlist",
-        description="Update some fields of an existing playlist by ID.",
+        description="Update some fields of an existing playlist by slug.",
         request=PlaylistCreateUpdateSerializer,
         responses={200: PlaylistDetailSerializer},
     ),
     destroy=extend_schema(
         tags=["Playlists"],
         summary="Delete playlist",
-        description="Delete an existing playlist by ID.",
+        description="Delete an existing playlist by slug.",
         responses={204: OpenApiResponse(description="Playlist successfully deleted")},
     ),
 )
 class PlaylistViewSet(viewsets.ModelViewSet):
-    queryset = Playlist.objects.all()
+    """
+    ViewSet для управления плейлистами.
+    Поддерживает CRUD, поиск, сортировку и очистку треков.
+    """
+
     permission_classes = [IsOwnerOrReadOnly]
     lookup_field = "slug"
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -63,26 +68,55 @@ class PlaylistViewSet(viewsets.ModelViewSet):
     ordering_fields = ["created_at", "updated_at", "name"]
 
     def get_queryset(self):
-        qs = Playlist.objects.all().annotate(tracks_count=Count("playlisttrack"))
+        """Оптимизированный queryset с подсчётом треков"""
+        qs = (
+            Playlist.objects.all()
+            .annotate(tracks_count=Count("playlisttrack"))
+            .select_related("owner")
+        )
         return optimize_playlist_queryset(qs)
 
     def get_serializer_class(self):
-        if self.action == "list":
-            return PlaylistListSerializer
-        if self.action == "retrieve":
-            return PlaylistDetailSerializer
-        if self.action in ["create", "update", "partial_update"]:
-            return PlaylistCreateUpdateSerializer
-        return PlaylistDetailSerializer
+        """Выбор сериализатора по действию"""
+        match self.action:
+            case "list":
+                return PlaylistListSerializer
+            case "retrieve":
+                return PlaylistDetailSerializer
+            case "create" | "update" | "partial_update":
+                return PlaylistCreateUpdateSerializer
+            case _:
+                return PlaylistDetailSerializer
+
+    def perform_create(self, serializer):
+        """Привязываем владельца при создании"""
+        user = self.request.user
+        if not user.is_authenticated:
+            raise PermissionDenied("Authentication required to create a playlist.")
+        serializer.save(owner=self.request.user)
 
     @extend_schema(
         tags=["Playlists"],
         summary="Clear all tracks from a playlist",
-        description="Remove all tracks from the specified playlist.",
+        description="Remove all tracks from the specified playlist (owner only).",
         responses={200: OpenApiResponse(description="Tracks successfully cleared")},
     )
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["post"], url_path="clear-tracks")
     def clear_tracks(self, request, slug=None):
+        """Удаляет все треки из плейлиста (только владелец может очистить)"""
         playlist = self.get_object()
-        playlist.playlisttrack_set.all().delete()
-        return Response({"status": "tracks cleared"})
+
+        # Проверка прав: только владелец
+        if playlist.owner != request.user:
+            return Response(
+                {"detail": "You do not have permission to clear this playlist."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        deleted_count, _ = playlist.playlisttrack_set.all().delete()
+        return Response(
+            {"status": f"{deleted_count} tracks cleared"},
+            status=status.HTTP_200_OK,
+        )
+
+__all__ = ["PlaylistViewSet"]

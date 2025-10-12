@@ -1,20 +1,14 @@
-# views.py
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework import status
-from django.contrib.auth import get_user_model
+import uuid
+
 from apps.users.models import UserToken
 from .serializers import ResetPasswordSerializer
 
-User = get_user_model()
-
 
 class ResetPasswordAPIView(APIView):
-    """
-    Сброс пароля через одноразовый токен из email.
-    """
-
     permission_classes = [AllowAny]
     serializer_class = ResetPasswordSerializer
 
@@ -28,6 +22,16 @@ class ResetPasswordAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Проверяем, что токен — валидный UUID
+        try:
+            uuid.UUID(str(token))
+        except (ValueError, TypeError, AttributeError):
+            return Response(
+                {"detail": f'"{token}" Your UUID is not valid.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Получаем токен из базы
         try:
             user_token = UserToken.objects.get(token=token, token_type="reset")
         except UserToken.DoesNotExist:
@@ -36,8 +40,7 @@ class ResetPasswordAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # проверяем срок жизни токена
-        if user_token.is_expired():
+        if user_token.is_expired() or user_token.is_used:
             return Response(
                 {"detail": "Token expired or already used"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -47,7 +50,6 @@ class ResetPasswordAPIView(APIView):
         user.set_password(new_password)
         user.save()
 
-        # помечаем токен как использованный
         user_token.is_used = True
         user_token.save()
 
@@ -55,3 +57,5 @@ class ResetPasswordAPIView(APIView):
             {"detail": "Password has been reset successfully"},
             status=status.HTTP_200_OK,
         )
+
+__all__ = ["ResetPasswordAPIView"]
