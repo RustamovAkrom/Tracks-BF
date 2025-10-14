@@ -9,10 +9,9 @@ from .serializers import (
     TrackDetailSerializer,
     TrackCreateUpdateSerializer,
 )
-from .utils import optimize_track_queryset
-from .pagination import SmallResultsSetPagination
+from apps.shared.paginations.base import SmallResultsSetPagination
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse
-from .permissions import IsOwnerOrReadOnly
+from apps.shared.permissions.base import IsOwnerOrReadOnly
 
 
 @extend_schema_view(
@@ -71,7 +70,8 @@ class TrackViewSet(ModelViewSet):
     pagination_class = SmallResultsSetPagination
 
     def get_queryset(self):
-        return optimize_track_queryset(Track.objects.filter(is_published=True))
+        qs = Track.objects.filter(is_published=True)
+        return qs.select_related("artist", "album").order_by("-plays_count")
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -84,3 +84,6 @@ class TrackViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+
+__all__ = ["TrackViewSet"]

@@ -11,15 +11,12 @@ class ArtistAPITestCase(APITestCase):
     """Тесты для Artist API (полный CRUD + доступы + вложенные данные)."""
 
     def setUp(self):
-        # Создаём суперпользователя для CRUD
         self.admin = User.objects.create_superuser(
             username="admin", email="admin@example.com", password="adminpass"
         )
 
-        # Публичный артист (по умолчанию is_published=True, если есть)
         self.artist = Artist.objects.create(name="Test Artist", owner=self.admin)
 
-        # Альбом и трек для детального теста
         self.album = Album.objects.create(
             name="Test Album", artist=self.artist, owner=self.admin
         )
@@ -30,12 +27,9 @@ class ArtistAPITestCase(APITestCase):
             artist=self.artist,
             duration=180,
         )
+        self.list_url = reverse("artist-list")
+        self.detail_url = reverse("artist-detail", args=[self.artist.slug])
 
-        # URL
-        self.list_url = reverse("artist-list")  # /artists/
-        self.detail_url = reverse("artist-detail", args=[self.artist.slug])  # /artists/<slug>/
-
-    # ---------------- LIST ----------------
     def test_artist_list_anon(self):
         """Аноним может видеть список артистов"""
 
@@ -51,7 +45,6 @@ class ArtistAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreater(len(response.data), 0)
 
-    # ---------------- RETRIEVE ----------------
     def test_artist_retrieve(self):
         """Аноним может видеть детали артиста с альбомами и треками"""
 
@@ -62,7 +55,6 @@ class ArtistAPITestCase(APITestCase):
         self.assertEqual(len(response.data["albums"]), 1)
         self.assertEqual(response.data["albums"][0]["tracks"][0]["name"], "Test Track")
 
-    # ---------------- CREATE ----------------
     def test_artist_create_admin(self):
         """Админ может создать артиста"""
 
@@ -79,7 +71,6 @@ class ArtistAPITestCase(APITestCase):
         response = self.client.post(self.list_url, data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    # ---------------- UPDATE ----------------
     def test_artist_update_admin(self):
         """Админ может полностью обновить артиста"""
 
@@ -107,7 +98,6 @@ class ArtistAPITestCase(APITestCase):
         response = self.client.put(self.detail_url, data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    # ---------------- DELETE ----------------
     def test_artist_delete_admin(self):
         """Админ может удалить артиста"""
 

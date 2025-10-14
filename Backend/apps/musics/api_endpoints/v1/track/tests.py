@@ -17,7 +17,9 @@ class TrackAPITestCase(APITestCase):
         self.client.force_authenticate(user=self.user)
 
         self.artist = Artist.objects.create(name="Artist 1", owner=self.user)
-        self.album = Album.objects.create(name="Album 1", artist=self.artist, owner=self.user)
+        self.album = Album.objects.create(
+            name="Album 1", artist=self.artist, owner=self.user
+        )
 
         audio_file1 = SimpleUploadedFile(
             "audio1.mp3", b"file_content", content_type="audio/mpeg"

@@ -7,7 +7,9 @@ from .artist import Artist
 
 
 class Album(NamedModel):
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="albums")
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="albums"
+    )
     artist = models.ForeignKey(Artist, on_delete=models.CASCADE, related_name="albums")
     release_date = models.DateField(
         verbose_name=_("Release date"), blank=True, null=True, db_index=True

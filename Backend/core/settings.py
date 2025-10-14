@@ -28,7 +28,7 @@ CORS_ALLOW_CREDENTIALS = True
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 
-INSTALLED_APPS = [*THIRD_PARTY_APPS, *DEFAULT_APPS, *PROJECT_APPS] # noqa: F405
+INSTALLED_APPS = [*THIRD_PARTY_APPS, *DEFAULT_APPS, *PROJECT_APPS]  # noqa: F405
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -99,7 +99,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",  # username
-    "apps.users.backends.users.EmailBackend",     # кастомный backend для email
+    "apps.users.backends.users.EmailBackend",  # кастомный backend для email
 ]
 
 LANGUAGE_CODE = "uz"

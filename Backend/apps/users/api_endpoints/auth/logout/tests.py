@@ -1,10 +1,8 @@
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
-from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
-
-User = get_user_model()
+from apps.users.models import User
 
 
 class LogoutAPITestCase(APITestCase):
@@ -12,16 +10,16 @@ class LogoutAPITestCase(APITestCase):
         self.user = User.objects.create_user(
             username="testuser", email="test@example.com", password="testpassword"
         )
-        # Генерируем токены
         self.refresh_token = str(RefreshToken.for_user(self.user))
         self.access_token = str(RefreshToken(self.refresh_token).access_token)
-        # Используем reverse для чистоты
+
         self.logout_url = reverse("users:jwt-logout")
 
     def test_logout_success(self):
         """
         Проверка успешного логаута с черным списком refresh token
         """
+
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
         response = self.client.post(
             self.logout_url, {"refresh": self.refresh_token}, format="json"
@@ -33,6 +31,7 @@ class LogoutAPITestCase(APITestCase):
         """
         Попытка логаута с неверным refresh token
         """
+
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
         response = self.client.post(
             self.logout_url, {"refresh": "wrongtoken"}, format="json"

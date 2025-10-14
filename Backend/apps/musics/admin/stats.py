@@ -3,6 +3,7 @@ from unfold.admin import ModelAdmin as UnfoldModelAdmin
 
 from apps.musics.models import Like, ListeningHistory
 
+
 @admin.register(Like)
 class LikeAdmin(UnfoldModelAdmin):
     list_display = ("id", "user", "track", "created_at")
@@ -10,6 +11,7 @@ class LikeAdmin(UnfoldModelAdmin):
     list_filter = ("created_at",)
     date_hierarchy = "created_at"
     ordering = ("-created_at",)
+
 
 @admin.register(ListeningHistory)
 class ListeningHistoryAdmin(UnfoldModelAdmin):

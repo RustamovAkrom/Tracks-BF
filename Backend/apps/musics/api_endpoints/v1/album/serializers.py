@@ -67,6 +67,7 @@ class AlbumCreateUpdateSerializer(serializers.ModelSerializer):
             validated_data["owner"] = request.user
         return super().create(validated_data)
 
+
 __all__ = [
     "AlbumListSerializer",
     "AlbumDetailSerializer",

@@ -19,7 +19,7 @@ class UserToken(models.Model):
     token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     token_type = models.CharField(max_length=10, choices=TOKEN_TYPE_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField(default=default_expiry)  # ✅ исправлено
+    expires_at = models.DateTimeField(default=default_expiry)
     is_used = models.BooleanField(default=False)
 
     def is_expired(self):

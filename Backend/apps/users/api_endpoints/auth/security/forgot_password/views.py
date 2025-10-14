@@ -14,7 +14,7 @@ class ForgotPasswordAPIView(APIView):
     Отправка ссылки для сброса пароля пользователю по email.
     """
 
-    permission_classes = [AllowAny]  # доступно для всех
+    permission_classes = [AllowAny]
     serializer_class = ForgotPasswordSerializer
 
     def post(self, request, *args, **kwargs):
@@ -35,13 +35,16 @@ class ForgotPasswordAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # создаём одноразовый токен в БД
+        # Creating a password reset token
         token = UserToken.objects.create(user=user, token_type="reset")
 
-        # формируем ссылку
+        # Sending password reset email
         send_password_reset_email(user, token.token)
 
         return Response(
             {"detail": "Password reset link sent to your email."},
             status=status.HTTP_200_OK,
         )
+
+
+__all__ = ("ForgotPasswordAPIView",)

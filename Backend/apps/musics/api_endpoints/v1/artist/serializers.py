@@ -19,7 +19,6 @@ class TrackSerializer(serializers.ModelSerializer):
         )
 
 
-# ---------------------- ALBUM ----------------------
 class AlbumWithTracksSerializer(serializers.ModelSerializer):
     tracks = TrackSerializer(many=True, read_only=True)
 
@@ -36,7 +35,6 @@ class AlbumWithTracksSerializer(serializers.ModelSerializer):
         )
 
 
-# ---------------------- ARTIST LIST ----------------------
 class ArtistListSerializer(serializers.ModelSerializer):
     """Список артистов (для /artists/)"""
 
@@ -55,7 +53,6 @@ class ArtistListSerializer(serializers.ModelSerializer):
         )
 
 
-# ---------------------- ARTIST DETAIL ----------------------
 class ArtistDetailSerializer(serializers.ModelSerializer):
     """Детали артиста (включая альбомы и треки)"""
 
@@ -71,13 +68,12 @@ class ArtistDetailSerializer(serializers.ModelSerializer):
             "bio",
             "avatar",
             "meta",
-            "albums",  # альбомы с треками
+            "albums",
             "created_at",
             "updated_at",
         )
 
 
-# ---------------------- ARTIST CREATE/UPDATE ----------------------
 class ArtistCreateUpdateSerializer(serializers.ModelSerializer):
     """Создание и обновление артиста — без необходимости указывать owner"""
 

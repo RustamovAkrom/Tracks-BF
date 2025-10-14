@@ -1,10 +1,8 @@
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
-from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
-
-User = get_user_model()
+from apps.users.models import User
 
 
 class ProfileViewTestCase(APITestCase):
@@ -16,7 +14,7 @@ class ProfileViewTestCase(APITestCase):
             first_name="Old",
             last_name="Name",
         )
-        self.url = reverse("users:profile")  # путь к ProfileView в urls.py
+        self.url = reverse("users:profile")
         refresh = RefreshToken.for_user(self.user)
         self.access_token = str(refresh.access_token)
 
@@ -39,7 +37,7 @@ class ProfileViewTestCase(APITestCase):
         self.user.refresh_from_db()
         self.assertEqual(self.user.first_name, "New")
         self.assertEqual(self.user.last_name, "User")
-        self.assertEqual(self.user.email, "test@example.com")  # email не меняется
+        self.assertEqual(self.user.email, "test@example.com")
 
     def test_patch_profile_unauthenticated(self):
         response = self.client.patch(self.url, {"first_name": "New"})

@@ -1,10 +1,7 @@
 from rest_framework import generics, permissions
 from drf_spectacular.utils import extend_schema
-from django.contrib.auth import get_user_model
-
+from apps.users.models import User
 from .serializers import UserRegisterSerializer
-
-User = get_user_model()
 
 
 @extend_schema(

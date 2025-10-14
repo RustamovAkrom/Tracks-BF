@@ -1,11 +1,9 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse
-
 from apps.musics.models import Like, ListeningHistory
+from apps.shared.paginations.base import SmallResultsSetPagination
 from .serializers import LikeSerializer, ListeningHistorySerializer
-from .utils import optimize_likes_queryset, optimize_history_queryset
-from .pagination import SmallResultsSetPagination
 
 
 @extend_schema_view(
@@ -27,7 +25,6 @@ from .pagination import SmallResultsSetPagination
         description="Remove a track from the authenticated user's likes.",
         responses={204: OpenApiResponse(description="No Content")},
     ),
-    
 )
 class LikeViewSet(ModelViewSet):
     serializer_class = LikeSerializer
@@ -36,7 +33,7 @@ class LikeViewSet(ModelViewSet):
 
     def get_queryset(self):
         qs = Like.objects.filter(user=self.request.user)
-        return optimize_likes_queryset(qs)
+        return qs.select_related("track", "user").order_by("-created_at")
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -65,7 +62,10 @@ class ListeningHistoryViewSet(ModelViewSet):
         qs = ListeningHistory.objects.filter(user=self.request.user).order_by(
             "-listened_at"
         )
-        return optimize_history_queryset(qs)
+        return qs.select_related("track", "user")
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+__all__ = ["LikeViewSet", "ListeningHistoryViewSet"]

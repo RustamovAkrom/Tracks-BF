@@ -1,6 +1,6 @@
 import requests
+
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -9,15 +9,16 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.utils.text import slugify
 from urllib.parse import urlencode
 
-
-User = get_user_model()
+from apps.users.models import User
 
 
 def _unique_username(base_name: str) -> str:
     """Генерация уникального username, если уже существует"""
+
     base = slugify(base_name) or "user"
     username = base
     i = 0
+
     while User.objects.filter(username=username).exists():
         i += 1
         username = f"{base}{i}"
@@ -48,7 +49,7 @@ class GoogleCallbackView(APIView):
         if not code:
             return Response({"error": "No code provided"}, status=400)
 
-        # 1. Обмен кода на токен Google
+        # 1. Upon receiving the code, exchange it for access token
         token_resp = requests.post(
             "https://oauth2.googleapis.com/token",
             data={
@@ -67,7 +68,7 @@ class GoogleCallbackView(APIView):
                 status=400,
             )
 
-        # 2. Получение данных пользователя
+        # 2. Get user info
         user_info = requests.get(
             "https://www.googleapis.com/oauth2/v3/userinfo",
             headers={"Authorization": f"Bearer {access_token}"},
@@ -79,43 +80,32 @@ class GoogleCallbackView(APIView):
         if not email:
             return Response({"error": "No email returned from Google"}, status=400)
 
-        # 3. Создание/поиск пользователя
+        # 3. Create or get user
         user = User.objects.filter(email=email).first()
         if user:
             created = False
         else:
             username = _unique_username(name or email.split("@")[0])
             user = User.objects.create_user(
-                username=username,
-                email=email, 
-                first_name=name or "",
-                password=None
+                username=username, email=email, first_name=name or "", password=None
             )
             created = True
 
-        # 4. Генерация JWT токенов
+        # 4. Generate JWT tokens
         refresh = RefreshToken.for_user(user)
 
-        FRONTEND_REDIRECT = F"{settings.FRONTEND_URL}/auth/callback"
-        query_params = urlencode({
-            "access": str(refresh.access_token),
-            "refresh": str(refresh),
-            "email": email,
-            "name": name,
-            "created": str(created).lower(),
-        })
+        FRONTEND_REDIRECT = f"{settings.FRONTEND_URL}/auth/callback"
+        query_params = urlencode(
+            {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "email": email,
+                "name": name,
+                "created": str(created).lower(),
+            }
+        )
 
         return redirect(f"{FRONTEND_REDIRECT}?{query_params}")
-        # return Response(
-        #     {
-        #         "message": "Google login success",
-        #         "email": email,
-        #         "name": name,
-        #         "created": created,
-        #         "access": str(refresh.access_token),
-        #         "refresh": str(refresh),
-        #     }
-        # )
 
 
 __all__ = (

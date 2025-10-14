@@ -13,8 +13,14 @@ from .serializers import ProfileSerializer
 class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
-    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]  # 👈 поддержка файлов
+    parser_classes = [
+        parsers.MultiPartParser,
+        parsers.FormParser,
+        parsers.JSONParser,
+    ]
 
     def get_object(self):
-        # всегда возвращаем текущего пользователя
         return self.request.user
+
+
+__all__ = ["ProfileView"]

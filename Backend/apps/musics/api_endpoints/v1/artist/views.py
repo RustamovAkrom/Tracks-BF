@@ -9,6 +9,7 @@ from .serializers import (
     ArtistCreateUpdateSerializer,
 )
 
+
 @extend_schema_view(
     list=extend_schema(
         tags=["Artists"],
@@ -68,7 +69,7 @@ class ArtistViewSet(viewsets.ModelViewSet):
             return ArtistListSerializer
         elif self.action == "retrieve":
             return ArtistDetailSerializer
-        return ArtistCreateUpdateSerializer  # 👈 используем упрощённый CRUD сериализатор
+        return ArtistCreateUpdateSerializer
 
     def perform_create(self, serializer):
         """Привязываем владельца при создании"""
@@ -76,5 +77,6 @@ class ArtistViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             raise PermissionDenied("Authentication required to create a playlist.")
         serializer.save(owner=self.request.user)
-        
+
+
 __all__ = ["ArtistViewSet"]

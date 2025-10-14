@@ -6,7 +6,9 @@ from apps.shared.models.base import NamedModel
 
 
 class Artist(NamedModel):
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="artists")
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="artists"
+    )
     bio = models.TextField(verbose_name=_("Bio"), blank=True, null=True)
     avatar = models.ImageField(
         verbose_name=_("Avatar"), upload_to="artists/avatars/", blank=True, null=True

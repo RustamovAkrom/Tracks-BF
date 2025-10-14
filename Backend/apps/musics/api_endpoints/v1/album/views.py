@@ -1,7 +1,7 @@
 from rest_framework import viewsets, permissions, filters
 from rest_framework.exceptions import PermissionDenied
 from apps.musics.models import Album
-from .serializers import * # noqa
+from .serializers import *  # noqa
 from apps.shared.permissions import IsOwnerOrReadOnly
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse
 
@@ -65,7 +65,7 @@ class AlbumViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "list":
             return AlbumListSerializer
-        if self.action in ['create', 'update']:
+        if self.action in ["create", "update"]:
             return AlbumCreateUpdateSerializer
         return AlbumDetailSerializer
 
@@ -75,3 +75,6 @@ class AlbumViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             raise PermissionDenied("Authentication required to create a playlist.")
         serializer.save(owner=self.request.user)
+
+
+__all__ = ["AlbumViewSet"]

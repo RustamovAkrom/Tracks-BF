@@ -14,7 +14,6 @@ class TrackInPlaylistSerializer(serializers.ModelSerializer):
 class PlaylistTrackSerializer(serializers.ModelSerializer):
     """Трек в плейлисте с порядком"""
 
-    # Используем select_related('track') в queryset для ускорения JOIN
     track = TrackInPlaylistSerializer(read_only=True)
 
     class Meta:
@@ -87,9 +86,7 @@ class PlaylistCreateUpdateSerializer(serializers.ModelSerializer):
         if not value:
             return []
         found_ids = set(
-            Track.objects.filter(id__in=value)
-            .only("id")
-            .values_list("id", flat=True)
+            Track.objects.filter(id__in=value).only("id").values_list("id", flat=True)
         )
         missing = set(value) - found_ids
         if missing:

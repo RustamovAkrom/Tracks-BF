@@ -8,5 +8,11 @@ class MeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id", "username", "email", "is_email_verified", "avatar")  # только самое нужное
+        fields = (
+            "id",
+            "username",
+            "email",
+            "is_email_verified",
+            "avatar",
+        )
         read_only_fields = ("id", "username", "email", "is_email_verified", "avatar")

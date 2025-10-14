@@ -1,8 +1,9 @@
+import uuid
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework import status
-import uuid
 
 from apps.users.models import UserToken
 from .serializers import ResetPasswordSerializer
@@ -22,7 +23,7 @@ class ResetPasswordAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Проверяем, что токен — валидный UUID
+        # Check if token is a valid UUID
         try:
             uuid.UUID(str(token))
         except (ValueError, TypeError, AttributeError):
@@ -31,7 +32,7 @@ class ResetPasswordAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Получаем токен из базы
+        # Validate token and get associated user
         try:
             user_token = UserToken.objects.get(token=token, token_type="reset")
         except UserToken.DoesNotExist:
@@ -57,5 +58,6 @@ class ResetPasswordAPIView(APIView):
             {"detail": "Password has been reset successfully"},
             status=status.HTTP_200_OK,
         )
+
 
 __all__ = ["ResetPasswordAPIView"]

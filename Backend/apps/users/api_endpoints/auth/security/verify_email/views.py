@@ -11,7 +11,7 @@ class VerifyEmailAPIView(APIView):
     Подтверждение email пользователя через токен.
     """
 
-    permission_classes = [AllowAny]  # 🔑 разрешаем доступ без логина
+    permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
         token = request.query_params.get("token")
@@ -49,3 +49,6 @@ class VerifyEmailAPIView(APIView):
         return Response(
             {"detail": "Email verified successfully"}, status=status.HTTP_200_OK
         )
+
+
+__all__ = ("VerifyEmailAPIView",)

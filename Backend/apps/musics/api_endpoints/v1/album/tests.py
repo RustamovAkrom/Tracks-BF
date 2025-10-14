@@ -9,16 +9,13 @@ User = get_user_model()
 
 class AlbumAPITestCase(APITestCase):
     def setUp(self):
-        # Создаем пользователя и авторизуемся
         self.user = User.objects.create_user(
             username="testuser", email="testuser@example.com", password="password123"
         )
         self.client.force_authenticate(user=self.user)
 
-        # Создаем артиста
         self.artist = Artist.objects.create(name="Test Artist", owner=self.user)
 
-        # Создаем альбомы
         self.album1 = Album.objects.create(
             name="Album One", artist=self.artist, is_published=True, owner=self.user
         )
@@ -29,11 +26,10 @@ class AlbumAPITestCase(APITestCase):
     def test_list_albums(self):
         """Тестируем получение списка альбомов"""
 
-        url = reverse("album-list")  # /musics/albums/
+        url = reverse("album-list")
         response = self.client.get(url)
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Проверяем, что видим только опубликованные
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["name"], "Album One")
 

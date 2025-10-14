@@ -12,12 +12,12 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ("id", "username", "email", "password", "password2")
-        
+
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("A user with that email already exists.")
         return value
-    
+
     def validate(self, attrs):
         if attrs["password"] != attrs["password2"]:
             raise serializers.ValidationError({"password": "Passwords do not match."})
@@ -30,14 +30,14 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             email=validated_data.get("email"),
             password=validated_data["password"],
         )
-        user.is_email_verified = False  # ❌ сразу не активируем
+        user.is_email_verified = False
         user.save()
 
-        # 🔹 создаём токен активации
+        # Create activation token
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
 
-        # 🔹 отправляем письмо
+        # Send verification email
         send_verification_email(user, uid, token)
 
         return user

@@ -9,7 +9,6 @@ from .serializers import (
     PlaylistDetailSerializer,
     PlaylistCreateUpdateSerializer,
 )
-from .utils import optimize_playlist_queryset
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse
 from apps.shared.permissions import IsOwnerOrReadOnly
 
@@ -69,15 +68,17 @@ class PlaylistViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Оптимизированный queryset с подсчётом треков"""
+
         qs = (
             Playlist.objects.all()
             .annotate(tracks_count=Count("playlisttrack"))
             .select_related("owner")
         )
-        return optimize_playlist_queryset(qs)
+        return qs.select_related("owner").prefetch_related("tracks")
 
     def get_serializer_class(self):
         """Выбор сериализатора по действию"""
+
         match self.action:
             case "list":
                 return PlaylistListSerializer
@@ -90,6 +91,7 @@ class PlaylistViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Привязываем владельца при создании"""
+
         user = self.request.user
         if not user.is_authenticated:
             raise PermissionDenied("Authentication required to create a playlist.")
@@ -104,6 +106,7 @@ class PlaylistViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"], url_path="clear-tracks")
     def clear_tracks(self, request, slug=None):
         """Удаляет все треки из плейлиста (только владелец может очистить)"""
+
         playlist = self.get_object()
 
         # Проверка прав: только владелец
@@ -118,5 +121,6 @@ class PlaylistViewSet(viewsets.ModelViewSet):
             {"status": f"{deleted_count} tracks cleared"},
             status=status.HTTP_200_OK,
         )
+
 
 __all__ = ["PlaylistViewSet"]
