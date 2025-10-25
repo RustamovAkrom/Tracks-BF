@@ -2,13 +2,13 @@
 "use client";
 
 import { Play, Shuffle } from "lucide-react";
-import { Track } from "@/types/tracksTypes";
+import { TrackType } from "@/types/tracksTypes";
 
 interface ControlsBarProps {
   onPlayAll: () => void;
   isShuffled: boolean;
   onToggleShuffle: () => void;
-  filteredTracks: Track[];
+  filteredTracks: TrackType[];
 }
 
 export default function ControlsBar({

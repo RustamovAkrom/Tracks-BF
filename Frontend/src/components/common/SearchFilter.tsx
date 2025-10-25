@@ -1,7 +1,5 @@
-// components/common/SearchFilter.tsx
 "use client";
 
-import { useState, useMemo } from "react";
 import { Search, Filter } from "lucide-react";
 
 interface SearchFilterProps {

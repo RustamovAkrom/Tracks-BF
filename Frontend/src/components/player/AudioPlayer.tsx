@@ -1,13 +1,12 @@
-// components/player/AudioPlayer.tsx (updated to use percent for seek)
 "use client";
 
-import { Track } from "@/types/tracksTypes";
+import { TrackType } from "@/types/tracksTypes";
 import { formatTime } from "@/utils/formatTime";
 import { Play, Pause, Heart, SkipBack, SkipForward, Shuffle, Repeat, Volume2 } from "lucide-react";
 import Image from "next/image";
 
 interface AudioPlayerProps {
-  currentTrack: Track | null;
+  currentTrack: TrackType | null;
   isPlaying: boolean;
   currentTime: number;
   progress: number;
@@ -20,7 +19,7 @@ interface AudioPlayerProps {
   onNext: () => void;
   onSeek: (percent: number) => void;
   onVolumeChange: (value: number) => void;
-  onLike: (track: Track) => void;
+  onLike: (track: TrackType) => void;
   onToggleShuffle: () => void;
   onToggleRepeat: () => void;
 }

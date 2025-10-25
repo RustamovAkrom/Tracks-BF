@@ -10,8 +10,9 @@ interface AlbumDetailPageProps {
 
 export default async function AlbumDetailPage({ params }: AlbumDetailPageProps) {
   try {
-    const album = await getAlbum(params.slug);
-
+    const resolvedParams = await params;
+    const album = await getAlbum(resolvedParams.slug)
+    
     return (
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 mb-16">
         {/* ===== Header Section ===== */}
