@@ -5,6 +5,9 @@ import Navbar from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { cookies } from "next/headers";
+import { PlayerProvider } from "@/context/PlayerContext";
+import GlobalPlayer from "@/components/GlobalPlayer";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,11 +45,14 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {/* Передаем состояние логина в Navbar */}
-          <Navbar initialAuth={!!token} />
+          <PlayerProvider>
+            {/* Передаем состояние логина в Navbar */}
+            <Navbar initialAuth={!!token} />
 
-          <main className="flex-grow">{children}</main>
-          <Footer />
+            <main className="flex-grow">{children}</main>
+            <Footer />
+            <GlobalPlayer />
+          </PlayerProvider>
         </ThemeProvider>
       </body>
     </html>
