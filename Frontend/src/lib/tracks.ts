@@ -1,11 +1,10 @@
-// src/lib/tracks.ts
 import api from "@/lib/api";
 import { TrackType } from "@/types/tracksTypes";
 
 export async function getTracks(): Promise<TrackType[]> {
   const { data } = await api.get("/musics/tracks/");
-  // API returns { count, next, previous, results: TrackType[] }
-  return Array.isArray(data.results) ? data.results : [];
+  return data;
+  // return Array.isArray(data.results) ? data.results : [];
 }
 
 export async function getTrackBySlug(slug: string): Promise<TrackType | null> {
@@ -18,17 +17,12 @@ export async function getTrackBySlug(slug: string): Promise<TrackType | null> {
   }
 }
 
-// This function calls backend to like a track
-
-export async function likeTrack(id: number) {
-  const { data } = await api.post(`/musics/tracks/${id}/like/`);
+export async function likeTrack(slug: string) {
+  const { data } = await api.post(`/musics/tracks/${slug}/like/`);
   return data;
 }
 
-// This function calls backend to increment plays_count
-export async function postPlayCount(id: number) {
-  const { data } = await api.post(`/musics/tracks/${id}/play/`);
+export async function PlayTrack(slug: string) {
+  const { data } = await api.post(`/musics/tracks/${slug}/play/`);
   return data;
 }
-
-

@@ -1,4 +1,3 @@
-
 export interface TrackType {
   id: number;
   name: string;
@@ -9,5 +8,8 @@ export interface TrackType {
   likes_count: number;
   genre: string;
   slug: string;
+  artist_name: string;
+  album_name: string;
   is_published: boolean;
+  likedByUser?: boolean;
 }

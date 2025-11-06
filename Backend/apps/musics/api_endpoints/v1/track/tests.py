@@ -47,10 +47,10 @@ class TrackAPITestCase(APITestCase):
         )
 
         self.list_url = reverse("track-list")
-        self.detail_url = lambda pk: reverse("track-detail", args=[pk])
+        self.detail_url = lambda slug: reverse("track-detail", args=[slug])
         # Эти два будут работать только если у тебя реально есть эндпоинты в urls.py
-        self.play_url = lambda pk: reverse("track-play", args=[pk])
-        self.like_url = lambda pk: reverse("track-like", args=[pk])
+        self.play_url = lambda slug: reverse("track-play", args=[slug])
+        self.like_url = lambda slug: reverse("track-like", args=[slug])
 
     def _auth_post(self, url, data=None, format="json"):
         """Helper для авторизованных POST-запросов"""
@@ -63,7 +63,7 @@ class TrackAPITestCase(APITestCase):
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        results = response.data["results"]
+        results = response.data
         self.assertEqual(len(results), 2)  # только опубликованные
         names = {t["name"] for t in results}
         self.assertEqual(names, {"Track One", "Other Song"})
@@ -71,7 +71,7 @@ class TrackAPITestCase(APITestCase):
 
     def test_retrieve_track(self):
         """Тестируем получение детальной информации о треке"""
-        response = self.client.get(self.detail_url(self.track1.id))
+        response = self.client.get(self.detail_url(self.track1.slug))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["name"], self.track1.name)
         self.assertEqual(response.data["artist_name"], self.artist.name)
@@ -114,7 +114,7 @@ class TrackAPITestCase(APITestCase):
     def test_play_increment(self):
         """Тестируем увеличение счетчика прослушиваний"""
         try:
-            response = self._auth_post(self.play_url(self.track1.id))
+            response = self._auth_post(self.play_url(self.track1.slug))
         except Exception:
             self.skipTest("Endpoint track-play не реализован")
             return
@@ -125,7 +125,7 @@ class TrackAPITestCase(APITestCase):
     def test_like_increment(self):
         """Тестируем увеличение счетчика лайков"""
         try:
-            response = self._auth_post(self.like_url(self.track1.id))
+            response = self._auth_post(self.like_url(self.track1.slug))
         except Exception:
             self.skipTest("Endpoint track-like не реализован")
             return
@@ -138,12 +138,12 @@ class TrackAPITestCase(APITestCase):
         """Тестируем фильтрацию треков по артисту"""
         response = self.client.get(self.list_url, {"artist": self.artist.id})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data["results"]), 2)
+        self.assertEqual(len(response.data), 2)
 
     def test_search_by_name(self):
         """Тестируем поиск треков по имени"""
         response = self.client.get(self.list_url, {"search": "Track One"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        results = response.data["results"]
+        results = response.data
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["name"], "Track One")

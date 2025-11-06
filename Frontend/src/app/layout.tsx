@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { cookies } from "next/headers";
 import { PlayerProvider } from "@/context/PlayerContext";
-import GlobalPlayer from "@/components/GlobalPlayer";
+import { PlayerController } from "@/components/PlayerController";
 
 
 const geistSans = Geist({
@@ -36,25 +36,25 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <PlayerProvider>
-            {/* Передаем состояние логина в Navbar */}
-            <Navbar initialAuth={!!token} />
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}>
+  <ThemeProvider
+    attribute="class"
+    defaultTheme="system"
+    enableSystem
+    disableTransitionOnChange
+  >
+    <Navbar initialAuth={!!token} />
 
-            <main className="flex-grow">{children}</main>
-            <Footer />
-            <GlobalPlayer />
-          </PlayerProvider>
-        </ThemeProvider>
-      </body>
+<PlayerProvider>
+  <main className="flex-grow pt-16">{children}</main>
+  <PlayerController />
+</PlayerProvider>
+
+
+    <Footer />
+  </ThemeProvider>
+</body>
+
     </html>
   );
 }
