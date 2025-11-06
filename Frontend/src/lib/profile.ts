@@ -16,3 +16,9 @@ export async function updateProfile(payload: Partial<ProfileType>): Promise<Prof
   });
   return data;
 }
+
+// Отправка письма с подтверждением email
+export async function sendVerifyEmail(): Promise<{ detail: string }> {
+  const { data } = await api.post("/users/send-verify-email/");
+  return data;
+}

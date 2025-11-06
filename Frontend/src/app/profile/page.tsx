@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
-import { getProfile, updateProfile, Profile } from "@/lib/profile";
+import { getProfile, updateProfile, sendVerifyEmail } from "@/lib/profile";
 import { getMe, Me } from "@/lib/me";
-import { forgotPassword } from "@/lib/passwords"; // 👈 добавим вызов API
+import { forgotPassword } from "@/lib/passwords";
 import { Loader2, Save, Lock, Mail } from "lucide-react";
+import type { ProfileType } from "@/types/profilesTypes";
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<ProfileType | null>(null);
   const [me, setMe] = useState<Me | null>(null);
 
   const [loading, setLoading] = useState(true);
@@ -20,7 +21,10 @@ export default function ProfilePage() {
   const [lastName, setLastName] = useState("");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
-  // загрузка профиля и пользователя
+  const [verifyCooldown, setVerifyCooldown] = useState(0);
+  const cooldownRef = useRef<NodeJS.Timer | null>(null);
+
+  // Загрузка профиля и пользователя
   useEffect(() => {
     Promise.all([getProfile(), getMe()])
       .then(([profileData, meData]) => {
@@ -36,6 +40,7 @@ export default function ProfilePage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Сохранение профиля
   async function handleSave() {
     if (!profile) return;
     setSaving(true);
@@ -64,7 +69,7 @@ export default function ProfilePage() {
     }
   }
 
-  // 👇 Отправляем запрос на восстановление пароля
+  // Сброс пароля
   async function handleForgotPassword() {
     if (!me?.email) return setError("Email не найден");
     setError(null);
@@ -82,16 +87,43 @@ export default function ProfilePage() {
     }
   }
 
+  // Подтверждение email с cooldown
+  async function handleSendVerifyEmail() {
+    if (!me || verifyCooldown > 0) return;
+
+    setSaving(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      await sendVerifyEmail();
+      setMessage("Ссылка для подтверждения отправлена на вашу почту");
+
+      // Устанавливаем cooldown 60 секунд
+      setVerifyCooldown(60);
+      cooldownRef.current = setInterval(() => {
+        setVerifyCooldown((prev) => {
+          if (prev <= 1) {
+            if (cooldownRef.current) clearInterval(cooldownRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err) {
+      console.error(err);
+      setError("Не удалось отправить письмо. Попробуйте позже.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
       </div>
     );
-  }
-
-  if (error) {
-    return <p className="text-center text-red-600 mt-10">{error}</p>;
   }
 
   if (!profile || !me) {
@@ -107,11 +139,7 @@ export default function ProfilePage() {
         <div className="flex flex-col items-center mb-6">
           <div className="relative w-28 h-28 rounded-full overflow-hidden border-4 border-indigo-500">
             <Image
-              src={
-                avatarFile
-                  ? URL.createObjectURL(avatarFile)
-                  : profile.avatar || me.avatar || "/default-avatar.png"
-              }
+              src={avatarFile ? URL.createObjectURL(avatarFile) : profile.avatar || me.avatar || "/default-avatar.png"}
               alt="avatar"
               fill
               className="object-cover"
@@ -123,9 +151,7 @@ export default function ProfilePage() {
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={(e) =>
-                setAvatarFile(e.target.files ? e.target.files[0] : null)
-              }
+              onChange={(e) => setAvatarFile(e.target.files ? e.target.files[0] : null)}
             />
           </label>
         </div>
@@ -139,9 +165,7 @@ export default function ProfilePage() {
           <p className="text-sm text-gray-500">Email</p>
           <p className="font-medium flex items-center gap-2">
             {me.email}
-            {!me.is_email_verified && (
-              <span className="text-xs text-red-500">(не подтверждён)</span>
-            )}
+            {!me.is_email_verified && <span className="text-xs text-red-500">(не подтверждён)</span>}
           </p>
         </div>
 
@@ -165,16 +189,8 @@ export default function ProfilePage() {
           />
         </div>
 
-        {message && (
-          <p className="text-center text-green-600 text-sm font-medium mb-4">
-            {message}
-          </p>
-        )}
-        {error && (
-          <p className="text-center text-red-600 text-sm font-medium mb-4">
-            {error}
-          </p>
-        )}
+        {message && <p className="text-center text-green-600 text-sm font-medium mb-4">{message}</p>}
+        {error && <p className="text-center text-red-600 text-sm font-medium mb-4">{error}</p>}
 
         {/* Save button */}
         <button
@@ -188,7 +204,7 @@ export default function ProfilePage() {
 
         {/* Extra actions */}
         <div className="mt-8 space-y-4">
-          {/* Forgot password (API call) */}
+          {/* Forgot password */}
           <button
             onClick={handleForgotPassword}
             disabled={saving}
@@ -201,11 +217,14 @@ export default function ProfilePage() {
           {/* Verify email */}
           {!me.is_email_verified && (
             <button
-              onClick={() => alert("Скоро будет реализовано подтверждение email")}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg shadow-md transition"
+              onClick={handleSendVerifyEmail}
+              disabled={saving || verifyCooldown > 0}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg shadow-md transition text-white ${
+                verifyCooldown > 0 ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-500"
+              }`}
             >
               <Mail className="w-5 h-5" />
-              Подтвердить email
+              {verifyCooldown > 0 ? `Подтвердить email (${verifyCooldown}s)` : "Подтвердить email"}
             </button>
           )}
         </div>

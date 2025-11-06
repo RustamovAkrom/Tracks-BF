@@ -18,6 +18,7 @@ from apps.users.api_endpoints.auth.security import (
     ForgotPasswordAPIView,
     VerifyEmailAPIView,
 )
+from apps.users.api_endpoints.send_verify_email import SendVerifyEmailAPIView
 from apps.users.api_endpoints.profile import ProfileView
 
 app_name = "users"
@@ -42,6 +43,7 @@ password_confirmation_patterns = [
 ]
 
 urlpatterns = [
+    path("send-verify-email/", SendVerifyEmailAPIView.as_view(), name="send-verify-email"),
     path("auth/", include(auth_patterns)),
     path("social-auth/", include(social_auth_patterns)),
     path("passwords/", include(password_confirmation_patterns)),
