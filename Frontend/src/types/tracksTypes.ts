@@ -6,6 +6,7 @@ export interface TrackType {
   cover: string;
   plays_count: number;
   likes_count: number;
+  is_liked?: boolean;
   genre: string;
   slug: string;
   artist_name: string;

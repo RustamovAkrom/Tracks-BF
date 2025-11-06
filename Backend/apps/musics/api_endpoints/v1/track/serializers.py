@@ -1,10 +1,11 @@
 from rest_framework import serializers
-from apps.musics.models import Track
+from apps.musics.models import Track, Like as TrackLike
 
 
 class TrackListSerializer(serializers.ModelSerializer):
     artist_name = serializers.CharField(read_only=True)
     album_name = serializers.CharField(read_only=True)
+    is_liked = serializers.SerializerMethodField()
 
     class Meta:
         model = Track
@@ -21,7 +22,14 @@ class TrackListSerializer(serializers.ModelSerializer):
             "plays_count",
             "likes_count",
             "is_published",
+            "is_liked",
         ]
+    
+    def get_is_liked(self, obj):
+        user = self.context.get("request").user
+        if not user.is_authenticated:
+            return False
+        return TrackLike.objects.filter(user=user, track=obj).exists()
 
 
 class TrackDetailSerializer(serializers.ModelSerializer):

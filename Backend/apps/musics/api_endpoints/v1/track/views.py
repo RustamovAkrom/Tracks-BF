@@ -106,12 +106,19 @@ class TrackViewSet(ModelViewSet):
         track = self.get_object()
         like_obj, created = TrackLike.objects.get_or_create(user=request.user, track=track)
 
-        if not created:
-            like_obj.delete()
+        if created:
+            track.likes_count += 1
+            track.save(update_fields=['likes_count'])
+            is_liked = True
         else:
-            track.increment_likes()
+            like_obj.delete()
+            track.likes_count -= 1
+            track.save(update_fields=['likes_count'])
+            is_liked = False
 
         serializer = self.get_serializer(track)
+        data = serializer.data
+        data['is_liked'] = is_liked
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     # @action(detail=True, methods=["post"], url_path="top_tracks")
