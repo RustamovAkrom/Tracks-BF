@@ -37,23 +37,23 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}>
-  <ThemeProvider
-    attribute="class"
-    defaultTheme="system"
-    enableSystem
-    disableTransitionOnChange
-  >
-    <Navbar initialAuth={!!token} />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Navbar initialAuth={!!token} />
 
-<PlayerProvider>
-  <main className="flex-grow pt-16">{children}</main>
-  <PlayerController />
-</PlayerProvider>
+          <PlayerProvider>
+            <main className="flex-grow pt-16">{children}</main>
+            <PlayerController />
+          </PlayerProvider>
 
 
-    <Footer />
-  </ThemeProvider>
-</body>
+          <Footer />
+        </ThemeProvider>
+      </body>
 
     </html>
   );

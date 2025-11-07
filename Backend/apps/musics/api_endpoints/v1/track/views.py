@@ -67,7 +67,7 @@ class TrackViewSet(ModelViewSet):
         filters.OrderingFilter,
     ]
     lookup_field = "slug"
-    filterset_fields = ["genre", "artist", "album"]
+    filterset_fields = ["genres", "artist", "album"]
     search_fields = ["name", "artist__name", "album__name"]
     ordering_fields = ["plays_count", "likes_count", "duration"]
     ordering = ["-plays_count"]
@@ -94,7 +94,8 @@ class TrackViewSet(ModelViewSet):
     @action(detail=True, methods=["post"], url_path="play")
     def play(self, request, slug=None):
         track = self.get_object()
-        track.increment_plays()
+        track.plays_count += 1
+        track.save(update_fields=['plays_count'])
         serializer = self.get_serializer(track)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -121,8 +122,11 @@ class TrackViewSet(ModelViewSet):
         data['is_liked'] = is_liked
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # @action(detail=True, methods=["post"], url_path="top_tracks")
-    # def top_tracks(self, request, slug=None):
-
+    @action(detail=True, methods=["get"], url_path="similar")
+    def similar(self, request, slug=None):
+        track = self.get_object()
+        similar_tracks = Track.objects.get_similar_tracks(track, limit=10)
+        serializer = self.get_serializer(similar_tracks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 __all__ = ["TrackViewSet"]

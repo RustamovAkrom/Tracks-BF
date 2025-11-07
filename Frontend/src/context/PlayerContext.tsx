@@ -3,6 +3,8 @@
 import { createContext, useContext, useState, ReactNode, useRef, useEffect } from "react";
 import { TrackType } from "@/types/tracksTypes";
 
+type LikedTracks = Record<string, boolean>;
+
 interface PlayerContextType {
   currentTrack: TrackType | null;
   isPlaying: boolean;
@@ -19,6 +21,10 @@ interface PlayerContextType {
   prev: () => void;
   seek: (time: number) => void;
   setVolume: (vol: number) => void;
+
+  // ✅ Добавляем лайки
+  likedTracks: LikedTracks;
+  toggleLike: (trackSlug: string) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -37,10 +43,10 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
-
+  const [likedTracks, setLikedTracks] = useState<LikedTracks>({});
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Инициализация аудио на клиенте
+  // Инициализация аудио
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!audioRef.current) audioRef.current = new Audio();
@@ -105,6 +111,14 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // ✅ Лайки
+  const toggleLike = (trackSlug: string) => {
+    setLikedTracks(prev => {
+      const liked = !prev[trackSlug];
+      return { ...prev, [trackSlug]: liked };
+    });
+  };
+
   const pause = () => {
     if (!audioRef.current) return;
     audioRef.current.pause();
@@ -155,6 +169,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         prev,
         seek,
         setVolume: setAudioVolume,
+        likedTracks,
+        toggleLike, // ✅ добавляем сюда
       }}
     >
       {children}

@@ -17,10 +17,17 @@ export async function getTrackBySlug(slug: string): Promise<TrackType | null> {
   }
 }
 
+// Получение похожих треков
+export async function getSimilarTracks(slug: string): Promise<TrackType[]> {
+  const { data } = await api.get(`/musics/tracks/${slug}/similar/`);
+  return data;
+}
+
 export async function likeTrack(slug: string) {
   const { data } = await api.post(`/musics/tracks/${slug}/like/`);
   return data;
 }
+
 
 export async function PlayTrack(slug: string) {
   const { data } = await api.post(`/musics/tracks/${slug}/play/`);

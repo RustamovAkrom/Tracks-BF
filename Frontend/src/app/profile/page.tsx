@@ -24,7 +24,6 @@ export default function ProfilePage() {
   const [verifyCooldown, setVerifyCooldown] = useState(0);
   const cooldownRef = useRef<NodeJS.Timer | null>(null);
 
-  // Загрузка профиля и пользователя
   useEffect(() => {
     Promise.all([getProfile(), getMe()])
       .then(([profileData, meData]) => {
@@ -33,14 +32,10 @@ export default function ProfilePage() {
         setFirstName(profileData.first_name || "");
         setLastName(profileData.last_name || "");
       })
-      .catch((err) => {
-        console.error(err);
-        setError("Ошибка загрузки профиля");
-      })
+      .catch(() => setError("Ошибка загрузки профиля"))
       .finally(() => setLoading(false));
   }, []);
 
-  // Сохранение профиля
   async function handleSave() {
     if (!profile) return;
     setSaving(true);
@@ -61,15 +56,13 @@ export default function ProfilePage() {
 
       setMessage("Профиль успешно обновлён");
       setAvatarFile(null);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("Ошибка при сохранении профиля");
     } finally {
       setSaving(false);
     }
   }
 
-  // Сброс пароля
   async function handleForgotPassword() {
     if (!me?.email) return setError("Email не найден");
     setError(null);
@@ -79,15 +72,13 @@ export default function ProfilePage() {
     try {
       await forgotPassword({ email: me.email });
       setMessage("Ссылка для сброса пароля отправлена на вашу почту");
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("Не удалось отправить письмо. Попробуйте позже.");
     } finally {
       setSaving(false);
     }
   }
 
-  // Подтверждение email с cooldown
   async function handleSendVerifyEmail() {
     if (!me || verifyCooldown > 0) return;
 
@@ -99,7 +90,6 @@ export default function ProfilePage() {
       await sendVerifyEmail();
       setMessage("Ссылка для подтверждения отправлена на вашу почту");
 
-      // Устанавливаем cooldown 60 секунд
       setVerifyCooldown(60);
       cooldownRef.current = setInterval(() => {
         setVerifyCooldown((prev) => {
@@ -110,8 +100,7 @@ export default function ProfilePage() {
           return prev - 1;
         });
       }, 1000);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("Не удалось отправить письмо. Попробуйте позже.");
     } finally {
       setSaving(false);
@@ -120,23 +109,28 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-white via-gray-100 to-gray-200 dark:from-black dark:via-gray-900 dark:to-gray-800 transition-colors duration-300">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
       </div>
     );
   }
 
   if (!profile || !me) {
-    return <p className="text-center mt-10">Нет данных профиля</p>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white via-gray-100 to-gray-200 dark:from-black dark:via-gray-900 dark:to-gray-800 transition-colors duration-300">
+        <p className="text-gray-700 dark:text-gray-300">Нет данных профиля</p>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-2xl mx-auto mt-24 px-4">
-      <h1 className="text-2xl font-bold mb-6 text-center">👤 Профиль</h1>
+    <div className="min-h-screen flex justify-center px-6 py-10 bg-gradient-to-b from-white via-gray-100 to-gray-200 dark:from-black dark:via-gray-900 dark:to-gray-800 transition-colors duration-300">
+      <div className="w-full max-w-2xl backdrop-blur-sm bg-white/30 dark:bg-gray-900/30 rounded-2xl p-6 flex flex-col gap-8">
 
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-md p-6">
+        <h1 className="text-2xl font-bold text-center">👤 Профиль</h1>
+
         {/* Avatar */}
-        <div className="flex flex-col items-center mb-6">
+        <div className="flex flex-col items-center">
           <div className="relative w-28 h-28 rounded-full overflow-hidden border-4 border-indigo-500">
             <Image
               src={avatarFile ? URL.createObjectURL(avatarFile) : profile.avatar || me.avatar || "/default-avatar.png"}
@@ -156,55 +150,53 @@ export default function ProfilePage() {
           </label>
         </div>
 
-        {/* Readonly fields */}
-        <div className="mb-4">
-          <p className="text-sm text-gray-500">Логин</p>
-          <p className="font-medium">{me.username}</p>
-        </div>
-        <div className="mb-4">
-          <p className="text-sm text-gray-500">Email</p>
-          <p className="font-medium flex items-center gap-2">
-            {me.email}
-            {!me.is_email_verified && <span className="text-xs text-red-500">(не подтверждён)</span>}
-          </p>
+        {/* Fields */}
+        <div className="flex flex-col gap-4">
+          <div>
+            <p className="text-sm text-gray-500">Логин</p>
+            <p className="font-medium">{me.username}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Email</p>
+            <p className="font-medium flex items-center gap-2">
+              {me.email}
+              {!me.is_email_verified && <span className="text-xs text-red-500">(не подтверждён)</span>}
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm text-gray-500 mb-1">Имя</label>
+            <input
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 bg-gray-50 dark:bg-gray-800"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-500 mb-1">Фамилия</label>
+            <input
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 bg-gray-50 dark:bg-gray-800"
+            />
+          </div>
         </div>
 
-        {/* Editable fields */}
-        <div className="mb-4">
-          <label className="block text-sm text-gray-500 mb-1">Имя</label>
-          <input
-            type="text"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 bg-gray-50 dark:bg-gray-800"
-          />
-        </div>
-        <div className="mb-6">
-          <label className="block text-sm text-gray-500 mb-1">Фамилия</label>
-          <input
-            type="text"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 bg-gray-50 dark:bg-gray-800"
-          />
-        </div>
+        {message && <p className="text-center text-green-600 font-medium">{message}</p>}
+        {error && <p className="text-center text-red-600 font-medium">{error}</p>}
 
-        {message && <p className="text-center text-green-600 text-sm font-medium mb-4">{message}</p>}
-        {error && <p className="text-center text-red-600 text-sm font-medium mb-4">{error}</p>}
+        {/* Actions */}
+        <div className="flex flex-col gap-4">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-md transition disabled:opacity-50"
+          >
+            {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+            {saving ? "Сохранение..." : "Сохранить"}
+          </button>
 
-        {/* Save button */}
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-md transition disabled:opacity-50"
-        >
-          {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-          {saving ? "Сохранение..." : "Сохранить"}
-        </button>
-
-        {/* Extra actions */}
-        <div className="mt-8 space-y-4">
-          {/* Forgot password */}
           <button
             onClick={handleForgotPassword}
             disabled={saving}
@@ -214,7 +206,6 @@ export default function ProfilePage() {
             Отправить ссылку для сброса пароля
           </button>
 
-          {/* Verify email */}
           {!me.is_email_verified && (
             <button
               onClick={handleSendVerifyEmail}
@@ -228,6 +219,7 @@ export default function ProfilePage() {
             </button>
           )}
         </div>
+
       </div>
     </div>
   );

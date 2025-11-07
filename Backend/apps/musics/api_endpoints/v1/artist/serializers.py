@@ -1,9 +1,15 @@
 from rest_framework import serializers
-from apps.musics.models import Artist, Album, Track
+from apps.musics.models import Artist, Album, Track, Genre
 
+class GenreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Genre
+        fields = ["id", "name", "slug"]
 
 # ---------------------- TRACK ----------------------
-class TrackSerializer(serializers.ModelSerializer):
+class ArtistTrackSerializer(serializers.ModelSerializer):
+    genres = GenreSerializer(many=True, read_only=True)
+
     class Meta:
         model = Track
         fields = (
@@ -14,13 +20,13 @@ class TrackSerializer(serializers.ModelSerializer):
             "cover",
             "plays_count",
             "likes_count",
-            "genre",
+            "genres",
             "is_published",
         )
 
 
 class AlbumWithTracksSerializer(serializers.ModelSerializer):
-    tracks = TrackSerializer(many=True, read_only=True)
+    tracks = ArtistTrackSerializer(many=True, read_only=True)
 
     class Meta:
         model = Album

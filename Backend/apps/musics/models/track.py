@@ -7,6 +7,7 @@ from django.core.validators import MinValueValidator
 from apps.shared.models.base import NamedModel
 from .artist import Artist
 from .album import Album
+from .genres import Genre
 from apps.musics.managers.track import TrackManager
 from django.core.cache import cache
 
@@ -28,8 +29,13 @@ class Track(NamedModel):
     cover = models.ImageField(
         verbose_name=_("Cover"), upload_to="tracks/covers/", blank=True, null=True
     )
-    genre = models.CharField(
-        verbose_name=_("Genre"), max_length=100, db_index=True, blank=True
+    genres = models.ManyToManyField(Genre, related_name="tracks", blank=True)
+    
+    description = models.TextField(
+        verbose_name=_("Description"), blank=True, null=True
+    )
+    release_date = models.DateField(
+        verbose_name=_("Release Date"), blank=True, null=True
     )
     plays_count = models.BigIntegerField(
         verbose_name=_("Plays Count"), default=0, db_index=True
@@ -46,7 +52,6 @@ class Track(NamedModel):
     class Meta:
         db_table = "musics_tracks"
         indexes = [
-            models.Index(fields=["genre"]),
             models.Index(fields=["-plays_count", "is_published"]),
             models.Index(fields=["-likes_count", "is_published"]),
         ]
@@ -58,34 +63,6 @@ class Track(NamedModel):
 
     def __str__(self):
         return f"{self.name} — {self.artist.name}"
-
-    # --- Atomарные методы ---
-    def increment_plays(self, delta=1):
-        self.__class__.objects.filter(pk=self.pk).update(
-            plays_count=F("plays_count") + delta
-        )
-        self.refresh_from_db(fields=["plays_count"])
-        return self.plays_count
-
-    def increment_likes(self, delta=1):
-        self.__class__.objects.filter(pk=self.pk).update(
-            likes_count=F("likes_count") + delta
-        )
-        self.refresh_from_db(fields=["likes_count"])
-        return self.likes_count
-
-    # --- Bulk методы ---
-    @classmethod
-    def bulk_increment_plays(cls, track_ids, delta=1):
-        cls.objects.filter(pk__in=track_ids).update(
-            plays_count=F("plays_count") + delta
-        )
-
-    @classmethod
-    def bulk_increment_likes(cls, track_ids, delta=1):
-        cls.objects.filter(pk__in=track_ids).update(
-            likes_count=F("likes_count") + delta
-        )
 
     # --- Кэш топ треков ---
     @classmethod
@@ -108,6 +85,10 @@ class Track(NamedModel):
     def album_name(self):
         return self.album.name if self.album else None
 
+    @property
+    def genres_list(self):
+        return [genre.name for genre in self.genre.all()]
+    
     # --- Уникальный slug ---
     def save(self, *args, **kwargs):
         if not self.slug:

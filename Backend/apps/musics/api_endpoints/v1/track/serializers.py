@@ -1,11 +1,30 @@
 from rest_framework import serializers
-from apps.musics.models import Track, Like as TrackLike
+from apps.musics.models import Track, Like as TrackLike, Genre
+
+
+class GenreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Genre
+        fields = ["id", "name", "slug"]
+
+
+class ArtistSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Track.artist.field.related_model  # это Artist
+        fields = ["id", "name", "slug"]
+
+
+class AlbumSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Track.album.field.related_model  # это Album
+        fields = ["id", "name", "slug", "cover", "release_date"]
 
 
 class TrackListSerializer(serializers.ModelSerializer):
-    artist_name = serializers.CharField(read_only=True)
-    album_name = serializers.CharField(read_only=True)
+    artist = ArtistSerializer(read_only=True)
+    album = AlbumSerializer(read_only=True)
     is_liked = serializers.SerializerMethodField()
+    genres = GenreSerializer(many=True, read_only=True)
 
     class Meta:
         model = Track
@@ -13,16 +32,18 @@ class TrackListSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "slug",
-            "artist_name",
-            "album_name",
+            "description",
+            "release_date",
+            "artist",
+            "album",
             "audio",
             "cover",
             "duration",
-            "genre",
-            "plays_count",
-            "likes_count",
+            "genres",
             "is_published",
             "is_liked",
+            "plays_count",
+            "likes_count",
         ]
     
     def get_is_liked(self, obj):
@@ -33,8 +54,9 @@ class TrackListSerializer(serializers.ModelSerializer):
 
 
 class TrackDetailSerializer(serializers.ModelSerializer):
-    artist_name = serializers.CharField(read_only=True)
-    album_name = serializers.CharField(read_only=True)
+    artist = ArtistSerializer(read_only=True)
+    album = AlbumSerializer(read_only=True)
+    genres = GenreSerializer(many=True, read_only=True)
 
     class Meta:
         model = Track
@@ -43,6 +65,7 @@ class TrackDetailSerializer(serializers.ModelSerializer):
 
 class TrackCreateUpdateSerializer(serializers.ModelSerializer):
     owner = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    genres = serializers.PrimaryKeyRelatedField(queryset=Genre.objects.all(), many=True)
 
     class Meta:
         model = Track
@@ -53,7 +76,7 @@ class TrackCreateUpdateSerializer(serializers.ModelSerializer):
             "duration",
             "audio",
             "cover",
-            "genre",
+            "genres",
             "owner",
             "is_published",
         ]

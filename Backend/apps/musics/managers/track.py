@@ -12,7 +12,7 @@ class TrackQuerySet(models.QuerySet):
         return qs
 
     def by_genre(self, genre):
-        return self.filter(genre_iexact=genre)
+        return self.filter(genres__name__iexact=genre)
 
     def search(self, q):
         return self.filter(
@@ -32,3 +32,19 @@ class TrackManager(models.Manager):
 
     def search(self, q):
         return self.get_queryset().search(q)
+
+    def get_similar_tracks(self, track, limit=10):
+        """
+        Возвращает похожие треки по жанру или артисту
+        """
+        return (
+            self.get_queryset()
+            .filter(
+                Q(genres__in=track.genres.all()) | Q(artist=track.artist),
+                is_published=True
+            )
+            .exclude(pk=track.pk)
+            .distinct()
+            .order_by('-plays_count')[:limit]
+        )
+
