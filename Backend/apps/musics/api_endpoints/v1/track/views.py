@@ -1,19 +1,21 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
+from django.utils import timezone
 from rest_framework import filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse
 
 from apps.musics.models import Track, Like as TrackLike
+from apps.musics.models.stats import ListeningHistory
 from .serializers import (
     TrackListSerializer,
     TrackDetailSerializer,
     TrackCreateUpdateSerializer,
 )
 from apps.shared.paginations.base import SmallResultsSetPagination
-from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse
 from apps.shared.permissions.base import IsOwnerOrReadOnly
 
 
@@ -73,6 +75,7 @@ class TrackViewSet(ModelViewSet):
     ordering = ["-plays_count"]
     # pagination_class = SmallResultsSetPagination
 
+    
     def get_queryset(self):
         qs = Track.objects.filter(is_published=True)
         return qs.select_related("artist", "album").order_by("-plays_count")
@@ -89,8 +92,25 @@ class TrackViewSet(ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
-    from rest_framework import status
+    def retrieve(self, request, *args, **kwargs):
+        track = self.get_object()
 
+        # Сохраняем историю прослушивания, если пользователь аутентифицирован
+        if request.user.is_authenticated:
+            ListeningHistory.objects.update_or_create(
+                user=request.user, 
+                track=track,
+                defaults={
+                    "listened_at": timezone.now(),
+                    # Можно передать duration или дополнительные поля
+                    # "duration": request.data.get("duration"),
+                    # "additional_info": {"device": "web", "source": "track_page"}
+                }
+            )
+
+        serializer = self.get_serializer(track)
+        return Response(serializer.data)
+    
     @action(detail=True, methods=["post"], url_path="play")
     def play(self, request, slug=None):
         track = self.get_object()

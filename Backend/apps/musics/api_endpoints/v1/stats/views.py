@@ -2,7 +2,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse
 from apps.musics.models import Like, ListeningHistory
-from apps.shared.paginations.base import SmallResultsSetPagination
+from .paginations import StatsPagination
 from .serializers import LikeSerializer, ListeningHistorySerializer
 
 
@@ -29,11 +29,11 @@ from .serializers import LikeSerializer, ListeningHistorySerializer
 class LikeViewSet(ModelViewSet):
     serializer_class = LikeSerializer
     permission_classes = [IsAuthenticated]
-    pagination_class = SmallResultsSetPagination
+    pagination_class = StatsPagination
 
     def get_queryset(self):
         qs = Like.objects.filter(user=self.request.user)
-        return qs.select_related("track", "user").order_by("-created_at")
+        return qs.select_related("track", "user").prefetch_related("track__likes").order_by("-created_at")
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -46,26 +46,16 @@ class LikeViewSet(ModelViewSet):
         description="Retrieve a list of all tracks the authenticated user has listened to (most recent first).",
         responses={200: ListeningHistorySerializer(many=True)},
     ),
-    create=extend_schema(
-        tags=["Listening History"],
-        summary="Add listening record",
-        description="Add a track to the authenticated user's listening history.",
-        responses={201: ListeningHistorySerializer},
-    ),
 )
 class ListeningHistoryViewSet(ModelViewSet):
     serializer_class = ListeningHistorySerializer
     permission_classes = [IsAuthenticated]
-    pagination_class = SmallResultsSetPagination
+    pagination_class = StatsPagination
 
     def get_queryset(self):
-        qs = ListeningHistory.objects.filter(user=self.request.user).order_by(
-            "-listened_at"
-        )
-        return qs.select_related("track", "user")
+        qs = ListeningHistory.objects.filter(user=self.request.user).order_by("-listened_at")[:50]
+        return qs.select_related("track", "user").prefetch_related("track__likes")
 
+    # create можно оставить, но обычно записи создаются автоматически при play()
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-
-
-__all__ = ["LikeViewSet", "ListeningHistoryViewSet"]

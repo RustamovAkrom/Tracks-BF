@@ -1,15 +1,8 @@
 // lib/me.ts
 import api from "@/lib/api";
+import type { MeType } from "@/types/meTypes";
 
-export interface Me {
-  id: number;
-  username: string;
-  email: string;
-  is_email_verified: boolean;
-  avatar?: string | null;
-}
-
-export async function getMe(): Promise<Me> {
-  const { data } = await api.get<Me>("/users/me/");
+export async function getMe(): Promise<MeType> {
+  const { data } = await api.get<MeType>("/users/me/");
   return data;
 }

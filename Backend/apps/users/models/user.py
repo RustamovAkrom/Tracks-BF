@@ -17,7 +17,7 @@ class User(AbstractUser, TimeStempedModel):
     email = models.EmailField(
         verbose_name=_("Email adress"), unique=True, db_index=True
     )
-    avatar = models.ImageField(upload_to="avatars/%Y/%M/%d", default="static/images/default-avatar.jpg", blank=True, null=True)
+    avatar = models.ImageField(upload_to="avatars/%Y/%M/%d", default="/default/default-avatar.jpg", blank=True, null=True)
     subscription_type = models.CharField(
         max_length=20,
         choices=SubscriptionTypeChoices.choices,

@@ -4,4 +4,7 @@ export interface ProfileType {
   first_name?: string;
   last_name?: string;
   avatar?: string | null;
+  subscription_type?: string;
+  is_email_verified?: boolean;
+  is_active?: boolean;
 }

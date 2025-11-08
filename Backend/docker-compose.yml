@@ -14,7 +14,7 @@ services:
     depends_on:
       - pgbouncer
 #      - rabbitmq
-#      - redis
+      - redis
 
   db:
     image: postgres:16-alpine
@@ -57,9 +57,9 @@ services:
       db:
         condition: service_healthy
 
-#  redis:
-#    image: redis:latest
-#    restart: always
+  redis:
+    image: redis:latest
+    restart: always
 
 #  rabbitmq:
 #    image: rabbitmq:management
@@ -75,52 +75,52 @@ services:
 #    volumes:
 #      - rabbitmq:/var/lib/rabbitmq
 
-#  celery_worker:
-#    build:
-#      context: .
-#      dockerfile: ./deployments/compose/django/Dockerfile
-#    command: /start-celeryworker
-#    restart: always
-#    volumes:
-#      - .:/app
-#    env_file:
-#      - .env
-#    depends_on:
-#      - redis
-#      - rabbitmq
-#      - pgbouncer
+  celery_worker:
+    build:
+      context: .
+      dockerfile: ./deployments/compose/django/Dockerfile
+    command: /start-celeryworker
+    restart: always
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - rabbitmq
+      - pgbouncer
 
-#  celery_beat:
-#    build:
-#      context: .
-#      dockerfile: ./deployments/compose/django/Dockerfile
-#    command: /start-celerybeat
-#    restart: always
-#    volumes:
-#      - .:/app
-#    env_file:
-#      - .env
-#    depends_on:
-#      - redis
-#      - rabbitmq
-#      - pgbouncer
+  celery_beat:
+    build:
+      context: .
+      dockerfile: ./deployments/compose/django/Dockerfile
+    command: /start-celerybeat
+    restart: always
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - rabbitmq
+      - pgbouncer
 
-#  celery-flower:
-#      env_file:
-#        - .env
-#      build:
-#        context: .
-#        dockerfile: ./deployments/compose/django/Dockerfile
-#      command: /start-flower
-#      restart: always
-#      volumes:
-#        - .:/app
-#      ports:
-#        - ${CELERY_FLOWER:-5555}:5555
-#      depends_on:
-#        - redis
-#        - rabbitmq
-#        - pgbouncer
+  celery-flower:
+      env_file:
+        - .env
+      build:
+        context: .
+        dockerfile: ./deployments/compose/django/Dockerfile
+      command: /start-flower
+      restart: always
+      volumes:
+        - .:/app
+      ports:
+        - ${CELERY_FLOWER:-5555}:5555
+      depends_on:
+        - redis
+        - rabbitmq
+        - pgbouncer
 
 volumes:
   pg_data:

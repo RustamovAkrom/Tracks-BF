@@ -2,7 +2,7 @@ from rest_framework import serializers
 from apps.users.models import User
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
-from django.contrib.auth.tokens import default_token_generator
+from apps.users.services.tokens import create_token
 from apps.users.services.email import send_verification_email
 
 
@@ -27,17 +27,16 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         validated_data.pop("password2")
         user = User.objects.create_user(
             username=validated_data["username"],
-            email=validated_data.get("email"),
+            email=validated_data["email"],
             password=validated_data["password"],
         )
         user.is_email_verified = False
         user.save()
 
         # Create activation token
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        token = default_token_generator.make_token(user)
-
+        token_obj = create_token(user, token_type="verify")
+        token_str = str(token_obj.token)
         # Send verification email
-        send_verification_email(user, uid, token)
+        send_verification_email(user, token_str)
 
         return user

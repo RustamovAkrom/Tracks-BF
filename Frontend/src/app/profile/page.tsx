@@ -3,14 +3,15 @@
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { getProfile, updateProfile, sendVerifyEmail } from "@/lib/profile";
-import { getMe, Me } from "@/lib/me";
+import { getMe } from "@/lib/me";
+import type { MeType } from "@/types/meTypes";
 import { forgotPassword } from "@/lib/passwords";
 import { Loader2, Save, Lock, Mail } from "lucide-react";
 import type { ProfileType } from "@/types/profilesTypes";
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<ProfileType | null>(null);
-  const [me, setMe] = useState<Me | null>(null);
+  const [me, setMe] = useState<MeType | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -127,7 +128,7 @@ export default function ProfilePage() {
     <div className="min-h-screen flex justify-center px-6 py-10 bg-gradient-to-b from-white via-gray-100 to-gray-200 dark:from-black dark:via-gray-900 dark:to-gray-800 transition-colors duration-300">
       <div className="w-full max-w-2xl backdrop-blur-sm bg-white/30 dark:bg-gray-900/30 rounded-2xl p-6 flex flex-col gap-8">
 
-        <h1 className="text-2xl font-bold text-center">👤 Профиль</h1>
+        <h1 className="text-2xl font-bold text-center">PROFILE INFO</h1>
 
         {/* Avatar */}
         <div className="flex flex-col items-center">
@@ -140,7 +141,7 @@ export default function ProfilePage() {
             />
           </div>
           <label className="mt-3 cursor-pointer text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
-            Изменить аватар
+            Edit Avatar
             <input
               type="file"
               accept="image/*"
@@ -153,7 +154,7 @@ export default function ProfilePage() {
         {/* Fields */}
         <div className="flex flex-col gap-4">
           <div>
-            <p className="text-sm text-gray-500">Логин</p>
+            <p className="text-sm text-gray-500">Login</p>
             <p className="font-medium">{me.username}</p>
           </div>
           <div>
@@ -164,7 +165,7 @@ export default function ProfilePage() {
             </p>
           </div>
           <div>
-            <label className="block text-sm text-gray-500 mb-1">Имя</label>
+            <label className="block text-sm text-gray-500 mb-1">Name</label>
             <input
               type="text"
               value={firstName}
@@ -173,7 +174,7 @@ export default function ProfilePage() {
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-500 mb-1">Фамилия</label>
+            <label className="block text-sm text-gray-500 mb-1">Surname</label>
             <input
               type="text"
               value={lastName}
@@ -194,7 +195,7 @@ export default function ProfilePage() {
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-md transition disabled:opacity-50"
           >
             {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-            {saving ? "Сохранение..." : "Сохранить"}
+            {saving ? "Saving..." : "Save Changes"}
           </button>
 
           <button
@@ -203,7 +204,7 @@ export default function ProfilePage() {
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-lg shadow-md transition disabled:opacity-50"
           >
             <Lock className="w-5 h-5" />
-            Отправить ссылку для сброса пароля
+            Send Password Reset Link
           </button>
 
           {!me.is_email_verified && (
@@ -215,7 +216,7 @@ export default function ProfilePage() {
               }`}
             >
               <Mail className="w-5 h-5" />
-              {verifyCooldown > 0 ? `Подтвердить email (${verifyCooldown}s)` : "Подтвердить email"}
+              {verifyCooldown > 0 ? `Verify email (${verifyCooldown}s)` : "Send Email Verification Link"}
             </button>
           )}
         </div>

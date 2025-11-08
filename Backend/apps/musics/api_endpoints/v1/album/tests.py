@@ -1,10 +1,8 @@
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
-from django.contrib.auth import get_user_model
 from apps.musics.models import Album, Artist
-
-User = get_user_model()
+from apps.users.models import User
 
 
 class AlbumAPITestCase(APITestCase):

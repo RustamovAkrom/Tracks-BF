@@ -42,9 +42,9 @@ api.interceptors.response.use(
       } catch (err) {
         Cookies.remove("access");
         Cookies.remove("refresh");
-        if (typeof window !== "undefined") {
-          window.location.href = config.auth.loginPath;
-        }
+        // if (typeof window !== "undefined") {
+        //   window.location.href = config.auth.loginPath;
+        // }
       }
     }
 

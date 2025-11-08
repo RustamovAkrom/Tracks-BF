@@ -31,13 +31,19 @@ class ListeningHistory(models.Model):
     track = models.ForeignKey(
         Track, on_delete=models.CASCADE, related_name="listened_by"
     )
-    listened_at = models.DateTimeField(auto_now_add=True)
+    listened_at = models.DateTimeField(auto_now=True)
     duration = models.PositiveIntegerField(
         null=True, blank=True, help_text="how many seconds listened"
+    )
+    additional_info = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Additional metadata about the listening session",
     )
 
     class Meta:
         db_table = "musics_listening_history"
+        unique_together = (("user", "track"),)
         indexes = [
             models.Index(fields=["user", "listened_at"]),
             models.Index(fields=["track", "listened_at"]),
