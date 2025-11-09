@@ -3,15 +3,20 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { getListeningHistory } from "@/lib/stats";
+import {
+  getListeningHistory,
+  deleteListeningHistoryItem,
+  clearListeningHistory,
+} from "@/lib/stats";
 import type { ListeningHistoryItemType } from "@/types/statsTypes";
-import { Headphones } from "lucide-react";
+import { Headphones, Trash2, Trash } from "lucide-react";
 
 export default function ListeningHistoryPage() {
   const [history, setHistory] = useState<ListeningHistoryItemType[]>([]);
   const [pageNumber, setPageNumber] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   // 🚀 Оптимизированный запрос с защитой от повторных вызовов
   useEffect(() => {
@@ -37,13 +42,50 @@ export default function ListeningHistoryPage() {
     };
   }, [pageNumber]);
 
+  // 🗑 Удаление одной записи
+  const handleDeleteItem = async (slug: string) => {
+    try {
+      await deleteListeningHistoryItem(slug);
+      setHistory((prev) => prev.filter((item) => item.track.slug !== slug));
+    } catch (err) {
+      console.error("Ошибка при удалении элемента:", err);
+    }
+  };
+
+  // 🧹 Очистка всей истории
+  const handleClearHistory = async () => {
+    if (!confirm("Вы уверены, что хотите удалить всю историю?")) return;
+    try {
+      setClearing(true);
+      await clearListeningHistory();
+      setHistory([]);
+    } catch (err) {
+      console.error("Ошибка при очистке истории:", err);
+    } finally {
+      setClearing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex justify-center px-6 py-10 bg-gradient-to-b from-white via-gray-100 to-gray-200 dark:from-black dark:via-gray-900 dark:to-gray-800 transition-colors duration-300">
       <div className="w-full max-w-6xl">
         {/* Заголовок */}
-        <h1 className="text-3xl font-bold mb-8 text-center text-zinc-900 dark:text-zinc-100">
-          История прослушиваний
-        </h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
+            История прослушиваний
+          </h1>
+
+          {history.length > 0 && (
+            <button
+              onClick={handleClearHistory}
+              disabled={clearing}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full transition disabled:opacity-60"
+            >
+              <Trash size={18} />
+              {clearing ? "Очищается..." : "Очистить всё"}
+            </button>
+          )}
+        </div>
 
         {/* Пустое состояние */}
         {history.length === 0 && !loading ? (
@@ -56,8 +98,17 @@ export default function ListeningHistoryPage() {
             {history.map((item) => (
               <li
                 key={item.id}
-                className="group bg-zinc-50 dark:bg-zinc-800 rounded-2xl overflow-hidden shadow hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                className="group bg-zinc-50 dark:bg-zinc-800 rounded-2xl overflow-hidden shadow hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative"
               >
+                {/* Кнопка удаления */}
+                <button
+                  onClick={() => handleDeleteItem(item.track.slug)}
+                  className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition"
+                  title="Удалить из истории"
+                >
+                  <Trash2 size={16} />
+                </button>
+
                 <Link href={`/tracks/${item.track.slug}`} className="block">
                   <div className="relative aspect-square w-full overflow-hidden">
                     <Image
@@ -90,7 +141,7 @@ export default function ListeningHistoryPage() {
         )}
 
         {/* Кнопка загрузки */}
-        {hasMore && !loading && (
+        {hasMore && !loading && history.length > 0 && (
           <div className="flex justify-center mt-8">
             <button
               onClick={() => setPageNumber((prev) => prev + 1)}

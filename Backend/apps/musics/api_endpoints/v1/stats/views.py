@@ -1,5 +1,8 @@
+from rest_framework.decorators import action
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse
 from apps.musics.models import Like, ListeningHistory
 from .paginations import StatsPagination
@@ -51,6 +54,7 @@ class ListeningHistoryViewSet(ModelViewSet):
     serializer_class = ListeningHistorySerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StatsPagination
+    lookup_field = "slug"
 
     def get_queryset(self):
         qs = ListeningHistory.objects.filter(user=self.request.user).order_by("-listened_at")[:50]
@@ -59,3 +63,17 @@ class ListeningHistoryViewSet(ModelViewSet):
     # create можно оставить, но обычно записи создаются автоматически при play()
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    @action(detail=False, methods=["delete"], url_path="clear", url_name="clear")
+    @extend_schema(
+        tags=["Listening History"],
+        summary="Clear listening history",
+        description="Delete all listening history records for the authenticated user.",
+        responses={204: OpenApiResponse(description="No Content")},
+    )
+    def clear(self, request, *args, **kwargs):
+        user = request.user
+        deleted_count, _ = ListeningHistory.objects.filter(user=user).delete()
+        return Response({"message": f"Cleared {deleted_count} listening history records."}, status=204)
+
+__all__ = ["LikeViewSet", "ListeningHistoryViewSet"]
