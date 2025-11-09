@@ -14,7 +14,7 @@ interface PlayerContextType {
   duration: number;
   volume: number;
   setQueue: (tracks: TrackType[]) => void;
-  play: (track: TrackType) => void;
+  play: (track: TrackType, playlist?: TrackType[]) => void;
   togglePlay: (track: TrackType) => void;
   pause: () => void;
   next: () => void;
@@ -22,9 +22,12 @@ interface PlayerContextType {
   seek: (time: number) => void;
   setVolume: (vol: number) => void;
 
-  // ✅ Добавляем лайки
   likedTracks: LikedTracks;
   toggleLike: (trackSlug: string) => void;
+
+  // Новый функционал
+  shuffle: boolean;
+  toggleShuffle: () => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -44,9 +47,11 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [likedTracks, setLikedTracks] = useState<LikedTracks>({});
+  const [shuffle, setShuffle] = useState(false);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Инициализация аудио
+  // === Audio initialization ===
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!audioRef.current) audioRef.current = new Audio();
@@ -69,7 +74,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [volume]);
 
-  // Воспроизведение трека
+  // === Track change ===
   useEffect(() => {
     if (!audioRef.current || !currentTrack) return;
     const audio = audioRef.current;
@@ -77,11 +82,12 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
   }, [currentTrack]);
 
-  const play = (track: TrackType) => {
-    const idx = queue.findIndex(t => t.id === track.id);
-    if (idx >= 0) {
-      setCurrentIndex(idx);
-      setCurrentTrack(queue[idx]);
+  const play = (track: TrackType, playlist?: TrackType[]) => {
+    if (playlist && playlist.length > 0) {
+      setQueue(playlist);
+      const idx = playlist.findIndex(t => t.id === track.id);
+      setCurrentIndex(idx >= 0 ? idx : 0);
+      setCurrentTrack(playlist[idx >= 0 ? idx : 0]);
     } else {
       setQueue([track]);
       setCurrentIndex(0);
@@ -93,6 +99,7 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
   const togglePlay = (track: TrackType) => {
     if (!audioRef.current) return;
 
+    // Если тот же трек
     if (currentTrack?.id === track.id) {
       if (isPlaying) {
         audioRef.current.pause();
@@ -101,22 +108,22 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         audioRef.current.play().then(() => setIsPlaying(true));
       }
     } else {
-      const newQueue = [...queue];
+      // Новый трек
+      const newQueue = queue.length > 0 ? [...queue] : [track];
       if (!newQueue.find(t => t.id === track.id)) newQueue.push(track);
-      setQueue(newQueue);
       const idx = newQueue.findIndex(t => t.id === track.id);
+      setQueue(newQueue);
       setCurrentIndex(idx);
       setCurrentTrack(track);
       setIsPlaying(true);
     }
   };
 
-  // ✅ Лайки
   const toggleLike = (trackSlug: string) => {
-    setLikedTracks(prev => {
-      const liked = !prev[trackSlug];
-      return { ...prev, [trackSlug]: liked };
-    });
+    setLikedTracks(prev => ({
+      ...prev,
+      [trackSlug]: !prev[trackSlug],
+    }));
   };
 
   const pause = () => {
@@ -125,18 +132,42 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     setIsPlaying(false);
   };
 
+  // === "Умный" Next ===
   const next = () => {
     if (queue.length === 0) return;
-    const nextIndex = (currentIndex + 1) % queue.length;
-    setCurrentIndex(nextIndex);
-    setCurrentTrack(queue[nextIndex]);
+
+    let nextIndex = currentIndex + 1;
+    if (shuffle) {
+      nextIndex = Math.floor(Math.random() * queue.length);
+    } else if (nextIndex >= queue.length) {
+      nextIndex = 0; // зацикливаем
+    }
+
+    const nextTrack = queue[nextIndex];
+    if (nextTrack) {
+      setCurrentIndex(nextIndex);
+      setCurrentTrack(nextTrack);
+      setIsPlaying(true);
+    }
   };
 
+  // === "Умный" Prev ===
   const prev = () => {
     if (queue.length === 0) return;
-    const prevIndex = (currentIndex - 1 + queue.length) % queue.length;
-    setCurrentIndex(prevIndex);
-    setCurrentTrack(queue[prevIndex]);
+
+    let prevIndex = currentIndex - 1;
+    if (shuffle) {
+      prevIndex = Math.floor(Math.random() * queue.length);
+    } else if (prevIndex < 0) {
+      prevIndex = queue.length - 1;
+    }
+
+    const prevTrack = queue[prevIndex];
+    if (prevTrack) {
+      setCurrentIndex(prevIndex);
+      setCurrentTrack(prevTrack);
+      setIsPlaying(true);
+    }
   };
 
   const seek = (time: number) => {
@@ -150,6 +181,8 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
     audioRef.current.volume = vol;
     setVolume(vol);
   };
+
+  const toggleShuffle = () => setShuffle(prev => !prev);
 
   return (
     <PlayerContext.Provider
@@ -170,7 +203,9 @@ export const PlayerProvider = ({ children }: { children: ReactNode }) => {
         seek,
         setVolume: setAudioVolume,
         likedTracks,
-        toggleLike, // ✅ добавляем сюда
+        toggleLike,
+        shuffle,
+        toggleShuffle,
       }}
     >
       {children}

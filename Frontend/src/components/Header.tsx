@@ -110,7 +110,7 @@ export default function Navbar({ initialAuth }: NavbarProps) {
           href="/"
           className="flex items-center gap-2 font-extrabold text-2xl tracking-tight text-indigo-600 dark:text-indigo-400 hover:scale-105 transform transition"
         >
-          SoundWave
+          Viberfy
         </Link>
 
         {/* Desktop Menu */}

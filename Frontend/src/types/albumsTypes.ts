@@ -6,6 +6,9 @@ export type AlbumsType = {
   name: string;
   slug: string;
   cover: string | null;
+  genre: string | null;
+  tracks_count: number;
+  created_at: string;
 };
 
 export type AlbumType = {
@@ -13,9 +16,13 @@ export type AlbumType = {
   name: string;
   slug: string;
   owner: number;
+  genre: string | null;
   artist: ArtistType;
   release_date: string | null;
   cover: string | null;
   is_published: boolean;
   tracks: TrackType[];
+  tracks_count: number;
+  created_at: string;
+  updated_at: string;
 }

@@ -43,10 +43,11 @@ class AlbumWithTracksSerializer(serializers.ModelSerializer):
         )
 
 
-class ArtistListSerializer(serializers.ModelSerializer):
-    """Список артистов (для /artists/)"""
+from rest_framework import serializers
 
+class ArtistListSerializer(serializers.ModelSerializer):
     albums_count = serializers.IntegerField(read_only=True)
+    tracks_count = serializers.SerializerMethodField()  # <-- используем метод
 
     class Meta:
         model = Artist
@@ -56,15 +57,19 @@ class ArtistListSerializer(serializers.ModelSerializer):
             "slug",
             "avatar",
             "albums_count",
+            "tracks_count",
             "created_at",
             "updated_at",
         )
 
+    def get_tracks_count(self, obj):
+        return Track.objects.filter(album__artist=obj).count()
+
 
 class ArtistDetailSerializer(serializers.ModelSerializer):
-    """Детали артиста (включая альбомы и треки)"""
-
     albums = AlbumWithTracksSerializer(many=True, read_only=True)
+    tracks = ArtistTrackSerializer(many=True, read_only=True)
+    tracks_count = serializers.SerializerMethodField()  # <-- метод
 
     class Meta:
         model = Artist
@@ -77,10 +82,18 @@ class ArtistDetailSerializer(serializers.ModelSerializer):
             "avatar",
             "meta",
             "albums",
+            "tracks",
+            "tracks_count",
             "created_at",
             "updated_at",
         )
 
+    def get_tracks(self, obj):
+        tracks = Track.objects.filter(album__artist=obj)
+        return ArtistTrackSerializer(tracks, many=True).data
+    
+    def get_tracks_count(self, obj):
+        return Track.objects.filter(album__artist=obj).count()
 
 class ArtistCreateUpdateSerializer(serializers.ModelSerializer):
     """Создание и обновление артиста — без необходимости указывать owner"""

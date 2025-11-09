@@ -17,6 +17,9 @@ class Album(NamedModel):
     cover = models.ImageField(
         verbose_name=_("Cover"), upload_to="albums/covers/", blank=True, null=True
     )
+    genre = models.CharField(
+        verbose_name=_("Genre"), max_length=100, blank=True, null=True
+    )
     is_published = models.BooleanField(verbose_name=_("Is published"), default=False)
 
     class Meta:
@@ -32,6 +35,13 @@ class Album(NamedModel):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
+
+    @property
+    def tracks_count(self):
+        return self.tracks.count()
+    
+    def get_tracks(self):
+        return self.tracks.filter(is_published=True)
 
     def __str__(self):
         return f"{self.name} — {self.artist.name}"
