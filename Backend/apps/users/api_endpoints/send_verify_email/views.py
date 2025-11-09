@@ -20,7 +20,9 @@ class SendVerifyEmailAPIView(APIView):
         user: User = request.user
 
         if user.is_email_verified:
-            return Response({"detail": "Email уже подтверждён"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Email уже подтверждён"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         # Создаём токен через модель UserToken
         token_obj = create_token(user, token_type="verify")
@@ -28,7 +30,11 @@ class SendVerifyEmailAPIView(APIView):
 
         # Отправка письма через Celery
         send_verification_email(user, token_str)
-        
-        return Response({"detail": "Ссылка для подтверждения отправлена на вашу почту"}, status=status.HTTP_200_OK)
+
+        return Response(
+            {"detail": "Ссылка для подтверждения отправлена на вашу почту"},
+            status=status.HTTP_200_OK,
+        )
+
 
 __all__ = ("SendVerifyEmailAPIView",)

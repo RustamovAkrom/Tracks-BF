@@ -30,10 +30,8 @@ class Track(NamedModel):
         verbose_name=_("Cover"), upload_to="tracks/covers/", blank=True, null=True
     )
     genres = models.ManyToManyField(Genre, related_name="tracks", blank=True)
-    
-    description = models.TextField(
-        verbose_name=_("Description"), blank=True, null=True
-    )
+
+    description = models.TextField(verbose_name=_("Description"), blank=True, null=True)
     release_date = models.DateField(
         verbose_name=_("Release Date"), blank=True, null=True
     )
@@ -88,7 +86,7 @@ class Track(NamedModel):
     @property
     def genres_list(self):
         return [genre.name for genre in self.genre.all()]
-    
+
     # --- Уникальный slug ---
     def save(self, *args, **kwargs):
         if not self.slug:

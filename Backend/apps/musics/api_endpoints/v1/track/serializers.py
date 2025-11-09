@@ -45,7 +45,7 @@ class TrackListSerializer(serializers.ModelSerializer):
             "plays_count",
             "likes_count",
         ]
-    
+
     def get_is_liked(self, obj):
         user = self.context.get("request").user
         if not user.is_authenticated:

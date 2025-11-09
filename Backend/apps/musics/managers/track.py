@@ -41,10 +41,9 @@ class TrackManager(models.Manager):
             self.get_queryset()
             .filter(
                 Q(genres__in=track.genres.all()) | Q(artist=track.artist),
-                is_published=True
+                is_published=True,
             )
             .exclude(pk=track.pk)
             .distinct()
-            .order_by('-plays_count')[:limit]
+            .order_by("-plays_count")[:limit]
         )
-

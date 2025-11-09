@@ -24,14 +24,15 @@ class VerifyEmailAPIView(APIView):
         token_obj = validate_token(token, token_type="verify")
         if not token_obj:
             return Response(
-                {"detail": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "Invalid or expired token"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
         user = token_obj.user
         user.is_email_verified = True
         user.save(update_fields=["is_email_verified"])
 
         mark_token_used(token_obj)
-        
+
         return Response(
             {"detail": "Email verified successfully"}, status=status.HTTP_200_OK
         )

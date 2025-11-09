@@ -1,10 +1,12 @@
 from rest_framework import serializers
 from apps.musics.models import Artist, Album, Track, Genre
 
+
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
         fields = ["id", "name", "slug"]
+
 
 # ---------------------- TRACK ----------------------
 class ArtistTrackSerializer(serializers.ModelSerializer):

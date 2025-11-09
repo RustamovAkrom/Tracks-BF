@@ -1,1 +1,1 @@
-from .email import * # noqa
+from .email import *  # noqa

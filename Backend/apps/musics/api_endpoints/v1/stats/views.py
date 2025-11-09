@@ -36,7 +36,11 @@ class LikeViewSet(ModelViewSet):
 
     def get_queryset(self):
         qs = Like.objects.filter(user=self.request.user)
-        return qs.select_related("track", "user").prefetch_related("track__likes").order_by("-created_at")
+        return (
+            qs.select_related("track", "user")
+            .prefetch_related("track__likes")
+            .order_by("-created_at")
+        )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -57,7 +61,9 @@ class ListeningHistoryViewSet(ModelViewSet):
     lookup_field = "slug"
 
     def get_queryset(self):
-        qs = ListeningHistory.objects.filter(user=self.request.user).order_by("-listened_at")[:50]
+        qs = ListeningHistory.objects.filter(user=self.request.user).order_by(
+            "-listened_at"
+        )[:50]
         return qs.select_related("track", "user").prefetch_related("track__likes")
 
     # create можно оставить, но обычно записи создаются автоматически при play()
@@ -74,6 +80,10 @@ class ListeningHistoryViewSet(ModelViewSet):
     def clear(self, request, *args, **kwargs):
         user = request.user
         deleted_count, _ = ListeningHistory.objects.filter(user=user).delete()
-        return Response({"message": f"Cleared {deleted_count} listening history records."}, status=204)
+        return Response(
+            {"message": f"Cleared {deleted_count} listening history records."},
+            status=204,
+        )
+
 
 __all__ = ["LikeViewSet", "ListeningHistoryViewSet"]

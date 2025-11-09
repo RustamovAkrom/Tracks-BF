@@ -5,6 +5,7 @@ from apps.users.models import User
 
 class MeSerializer(serializers.ModelSerializer):
     """Минимальные данные о юзере"""
+
     avatar = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:

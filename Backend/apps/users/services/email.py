@@ -1,6 +1,9 @@
 from django.core.mail import send_mail
 from django.conf import settings
-from apps.users.tasks import send_verification_email_task, send_password_reset_email_task
+from apps.users.tasks import (
+    send_verification_email_task,
+    send_password_reset_email_task,
+)
 
 
 def send_verification_email(user, token):
@@ -32,6 +35,7 @@ def send_password_reset_email(user, token):
             settings.DEFAULT_FROM_EMAIL,
             [user.email],
         )
+
 
 __all__ = (
     "send_verification_email",

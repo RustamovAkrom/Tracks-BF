@@ -75,7 +75,6 @@ class TrackViewSet(ModelViewSet):
     ordering = ["-plays_count"]
     # pagination_class = SmallResultsSetPagination
 
-    
     def get_queryset(self):
         qs = Track.objects.filter(is_published=True)
         return qs.select_related("artist", "album").order_by("-plays_count")
@@ -98,48 +97,53 @@ class TrackViewSet(ModelViewSet):
         # Сохраняем историю прослушивания, если пользователь аутентифицирован
         if request.user.is_authenticated:
             ListeningHistory.objects.update_or_create(
-                user=request.user, 
+                user=request.user,
                 track=track,
                 defaults={
                     "listened_at": timezone.now(),
                     # Можно передать duration или дополнительные поля
                     # "duration": request.data.get("duration"),
                     # "additional_info": {"device": "web", "source": "track_page"}
-                }
+                },
             )
 
         serializer = self.get_serializer(track)
         return Response(serializer.data)
-    
+
     @action(detail=True, methods=["post"], url_path="play")
     def play(self, request, slug=None):
         track = self.get_object()
         track.plays_count += 1
-        track.save(update_fields=['plays_count'])
+        track.save(update_fields=["plays_count"])
         serializer = self.get_serializer(track)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"], url_path="like")
     def like(self, request, slug=None):
         if not request.user.is_authenticated:
-            return Response({"detail": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(
+                {"detail": "Authentication required"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
         track = self.get_object()
-        like_obj, created = TrackLike.objects.get_or_create(user=request.user, track=track)
+        like_obj, created = TrackLike.objects.get_or_create(
+            user=request.user, track=track
+        )
 
         if created:
             track.likes_count += 1
-            track.save(update_fields=['likes_count'])
+            track.save(update_fields=["likes_count"])
             is_liked = True
         else:
             like_obj.delete()
             track.likes_count -= 1
-            track.save(update_fields=['likes_count'])
+            track.save(update_fields=["likes_count"])
             is_liked = False
 
         serializer = self.get_serializer(track)
         data = serializer.data
-        data['is_liked'] = is_liked
+        data["is_liked"] = is_liked
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["get"], url_path="similar")
@@ -148,5 +152,6 @@ class TrackViewSet(ModelViewSet):
         similar_tracks = Track.objects.get_similar_tracks(track, limit=10)
         serializer = self.get_serializer(similar_tracks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 __all__ = ["TrackViewSet"]

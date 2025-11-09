@@ -43,7 +43,9 @@ password_confirmation_patterns = [
 ]
 
 urlpatterns = [
-    path("send-verify-email/", SendVerifyEmailAPIView.as_view(), name="send-verify-email"),
+    path(
+        "send-verify-email/", SendVerifyEmailAPIView.as_view(), name="send-verify-email"
+    ),
     path("auth/", include(auth_patterns)),
     path("social-auth/", include(social_auth_patterns)),
     path("passwords/", include(password_confirmation_patterns)),
