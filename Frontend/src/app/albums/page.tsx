@@ -34,11 +34,6 @@ export default function AlbumsPage() {
   }, []);
 
   // ===== Уникальные жанры =====
-  const genres = useMemo(() => {
-    const set = new Set<string>();
-    albums.forEach((album) => album.genre && set.add(album.genre));
-    return ["All", ...Array.from(set).sort()];
-  }, [albums]);
 
   // ===== Фильтрация и сортировка =====
   const filtered = useMemo(() => {
@@ -46,9 +41,7 @@ export default function AlbumsPage() {
       const matchesSearch = album.name
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
-      const matchesGenre =
-        selectedGenre === "All" || album.genre === selectedGenre;
-      return matchesSearch && matchesGenre;
+      return matchesSearch;
     });
 
     if (sortOption === "name") {
@@ -102,15 +95,6 @@ export default function AlbumsPage() {
             </div>
 
             <div className="flex gap-2">
-              <select
-                value={selectedGenre}
-                onChange={(e) => setSelectedGenre(e.target.value)}
-                className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm shadow-sm"
-              >
-                {genres.map((g) => (
-                  <option key={g}>{g}</option>
-                ))}
-              </select>
 
               <select
                 value={sortOption}
@@ -169,9 +153,6 @@ export default function AlbumsPage() {
                     <h3 className="font-semibold text-lg truncate">
                       {album.name}
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">
-                      {album.genre || "Unknown Genre"}
-                    </p>
                     <p className="text-xs text-gray-400 mt-1">
                       Released:{" "}
                       {album.created_at

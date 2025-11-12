@@ -2,6 +2,7 @@ from rest_framework import serializers
 from apps.musics.models import Artist, Album, Track, Genre
 
 
+# ---------------------- GENRE ----------------------
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
@@ -27,6 +28,7 @@ class ArtistTrackSerializer(serializers.ModelSerializer):
         )
 
 
+# ---------------------- ALBUM ----------------------
 class AlbumWithTracksSerializer(serializers.ModelSerializer):
     tracks = ArtistTrackSerializer(many=True, read_only=True)
 
@@ -43,11 +45,10 @@ class AlbumWithTracksSerializer(serializers.ModelSerializer):
         )
 
 
-from rest_framework import serializers
-
+# ---------------------- ARTIST LIST ----------------------
 class ArtistListSerializer(serializers.ModelSerializer):
-    albums_count = serializers.IntegerField(read_only=True)
-    tracks_count = serializers.SerializerMethodField()  # <-- используем метод
+    albums_count = serializers.SerializerMethodField()
+    tracks_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Artist
@@ -56,20 +57,29 @@ class ArtistListSerializer(serializers.ModelSerializer):
             "name",
             "slug",
             "avatar",
+            "followers_count",
+            "total_plays",
+            "total_likes",
+            "is_verified",
             "albums_count",
             "tracks_count",
             "created_at",
             "updated_at",
         )
 
+    def get_albums_count(self, obj):
+        return obj.albums.filter(is_published=True).count()
+
     def get_tracks_count(self, obj):
-        return Track.objects.filter(album__artist=obj).count()
+        return obj.tracks.filter(is_published=True).count()
 
 
+# ---------------------- ARTIST DETAIL ----------------------
 class ArtistDetailSerializer(serializers.ModelSerializer):
     albums = AlbumWithTracksSerializer(many=True, read_only=True)
     tracks = ArtistTrackSerializer(many=True, read_only=True)
-    tracks_count = serializers.SerializerMethodField()  # <-- метод
+    albums_count = serializers.SerializerMethodField()
+    tracks_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Artist
@@ -81,30 +91,32 @@ class ArtistDetailSerializer(serializers.ModelSerializer):
             "bio",
             "avatar",
             "meta",
+            "followers_count",
+            "total_plays",
+            "total_likes",
+            "is_verified",
             "albums",
             "tracks",
+            "albums_count",
             "tracks_count",
             "created_at",
             "updated_at",
         )
 
-    def get_tracks(self, obj):
-        tracks = Track.objects.filter(album__artist=obj)
-        return ArtistTrackSerializer(tracks, many=True).data
-    
+    def get_albums_count(self, obj):
+        return obj.albums.filter(is_published=True).count()
+
     def get_tracks_count(self, obj):
-        return Track.objects.filter(album__artist=obj).count()
+        return obj.tracks.filter(is_published=True).count()
 
+# ---------------------- ARTIST CREATE/UPDATE ----------------------
 class ArtistCreateUpdateSerializer(serializers.ModelSerializer):
-    """Создание и обновление артиста — без необходимости указывать owner"""
-
     class Meta:
         model = Artist
-        fields = ("name", "bio", "avatar", "meta")
-        read_only_fields = ("slug",)
+        fields = ("name", "bio", "avatar", "meta", "is_verified")
+        read_only_fields = ("slug", "followers_count", "total_plays", "total_likes")
 
     def create(self, validated_data):
-        """Автоматически устанавливаем владельца артиста."""
         request = self.context.get("request")
         if request and hasattr(request, "user"):
             validated_data["owner"] = request.user

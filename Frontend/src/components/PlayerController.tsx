@@ -9,10 +9,14 @@ import {
   Volume2,
   VolumeX,
   Heart,
+  Info,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { GenreType } from "@/types/genresTypes";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 
 export const PlayerController = () => {
   const {
@@ -32,14 +36,23 @@ export const PlayerController = () => {
 
   const [muted, setMuted] = useState(false);
 
+  // === Restore volume ===
   useEffect(() => {
     const savedVolume = localStorage.getItem("player_volume");
+    const savedMuted = localStorage.getItem("player_muted") === "true";
     if (savedVolume) setVolume(parseFloat(savedVolume));
+    setMuted(savedMuted);
   }, []);
 
   const handleVolumeChange = (v: number) => {
     setVolume(v);
     localStorage.setItem("player_volume", String(v));
+  };
+
+  const handleMute = () => {
+    const newMuted = !muted;
+    setMuted(newMuted);
+    localStorage.setItem("player_muted", String(newMuted));
   };
 
   if (!currentTrack) return null;
@@ -64,20 +77,31 @@ export const PlayerController = () => {
         <div className="flex flex-col md:flex-row items-center justify-between max-w-7xl mx-auto px-3 sm:px-6 py-3 gap-3">
           {/* === ЛЕВАЯ ЧАСТЬ === */}
           <div className="flex items-center gap-3 w-full md:w-1/3 min-w-0">
-            <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden shadow-md flex-shrink-0">
+            {/* 🎵 Обложка */}
+            <Link
+              href={`/tracks/${currentTrack.slug}`}
+              className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden shadow-md flex-shrink-0 group"
+            >
               <Image
                 src={currentTrack.cover}
                 alt={currentTrack.name}
                 fill
-                className="object-cover"
+                className="object-cover group-hover:scale-110 transition-transform duration-300"
               />
-            </div>
-            <div className="truncate flex flex-col">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base truncate">
+              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition" />
+              <Info className="absolute bottom-1 right-1 w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition" />
+            </Link>
+
+            {/* 🧠 Название и жанры */}
+            <div className="truncate flex flex-col min-w-0">
+              <Link
+                href={`/tracks/${currentTrack.slug}`}
+                className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base truncate hover:text-blue-600 dark:hover:text-green-400 transition"
+              >
                 {currentTrack.name}
-              </h3>
+              </Link>
               <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                {currentTrack.genres.map((g) => g.name).join(", ")}
+                {currentTrack.genres?.map((g: GenreType) => g.name).join(", ") || "Unknown"}
               </p>
             </div>
 
@@ -85,7 +109,8 @@ export const PlayerController = () => {
             <motion.button
               whileTap={{ scale: 0.85 }}
               onClick={() => toggleLike(currentTrack.slug)}
-              className="ml-auto md:ml-2 text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-500 transition"
+              aria-label="Like track"
+              className="ml-auto md:ml-2 text-gray-600 dark:text-gray-300 hover:text-red-500 transition"
             >
               <Heart
                 className={`w-5 h-5 ${
@@ -99,10 +124,12 @@ export const PlayerController = () => {
 
           {/* === ЦЕНТР === */}
           <div className="flex flex-col items-center justify-center w-full md:w-1/3">
+            {/* Контролы */}
             <div className="flex items-center gap-4">
               <button
                 onClick={prev}
                 className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition"
+                aria-label="Previous track"
               >
                 <SkipBack className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
@@ -110,7 +137,8 @@ export const PlayerController = () => {
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => togglePlay(currentTrack)}
-                className="p-3 sm:p-4 bg-blue-500 hover:bg-blue-600 dark:bg-green-500 dark:hover:bg-green-600 text-white rounded-full transition shadow-md"
+                className="p-3 sm:p-4 bg-blue-500 hover:bg-blue-600 dark:bg-green-500 dark:hover:bg-green-600 text-white rounded-full transition shadow-md focus:ring-2 ring-offset-2 ring-blue-400 dark:ring-green-400"
+                aria-label={isPlaying ? "Pause" : "Play"}
               >
                 {isPlaying ? (
                   <Pause className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -122,6 +150,7 @@ export const PlayerController = () => {
               <button
                 onClick={next}
                 className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition"
+                aria-label="Next track"
               >
                 <SkipForward className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
@@ -133,9 +162,9 @@ export const PlayerController = () => {
                 {formatTime(currentTime)}
               </span>
 
-              <div className="relative w-full h-1.5 sm:h-2 rounded-full bg-gray-300 dark:bg-gray-700 overflow-hidden cursor-pointer group">
+              <div className="relative w-full h-1.5 sm:h-2 rounded-full bg-gray-300 dark:bg-gray-700 overflow-hidden group cursor-pointer">
                 <motion.div
-                  className="absolute top-0 left-0 h-full bg-blue-500 dark:bg-green-500"
+                  className="absolute top-0 left-0 h-full bg-blue-500 dark:bg-green-500 group-hover:brightness-110"
                   style={{
                     width: duration
                       ? `${(currentTime / duration) * 100}%`
@@ -163,10 +192,8 @@ export const PlayerController = () => {
           {/* === ПРАВАЯ ЧАСТЬ — ГРОМКОСТЬ === */}
           <div className="hidden md:flex items-center justify-end gap-3 w-1/3">
             <button
-              onClick={() => {
-                if (muted) handleVolumeChange(0.5);
-                setMuted(!muted);
-              }}
+              onClick={handleMute}
+              aria-label="Toggle mute"
               className="text-gray-600 dark:text-gray-300 hover:text-blue-500"
             >
               {muted || volume === 0 ? (
@@ -189,7 +216,7 @@ export const PlayerController = () => {
           {/* === МОБИЛЬНАЯ ГРОМКОСТЬ === */}
           <div className="flex md:hidden items-center gap-2 mt-2 w-full justify-center">
             <button
-              onClick={() => setMuted(!muted)}
+              onClick={handleMute}
               className="text-gray-600 dark:text-gray-300"
             >
               {muted || volume === 0 ? (

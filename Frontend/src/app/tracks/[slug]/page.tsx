@@ -114,7 +114,7 @@ export default function TrackDetailPage() {
                     {track.album.name}
                   </Link>
                 ) : (
-                  <span className="font-medium">{track.albums?.name ?? "Single"}</span>
+                  <span className="font-medium">{track.album ?? "Single"}</span>
                 )}
               </span>
 

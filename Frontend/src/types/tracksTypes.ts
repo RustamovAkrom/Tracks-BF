@@ -25,5 +25,5 @@ export interface TrackType {
 
   genres: GenreType[];
   artist: ArtistType;
-  albums?: AlbumType[];
+  album: AlbumType;
 }

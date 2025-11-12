@@ -2,7 +2,7 @@ from rest_framework import serializers
 from apps.musics.models import Album, Track, Artist, Genre
 
 
-class TrackGenreSerializer(serializers.ModelSerializer):
+class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
         fields = ("id", "name", "slug")
@@ -13,10 +13,7 @@ class AlbumListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Album
-        fields = ("id", "name", "slug", "cover", "genre", "release_date", "tracks_count", "created_at")
-
-    def get_tracks_count(self, obj):
-        return obj.tracks_count()
+        fields = ("id", "name", "slug", "cover", "release_date", "tracks_count", "created_at")
 
 
 class ArtistSerializer(serializers.ModelSerializer):
@@ -26,7 +23,7 @@ class ArtistSerializer(serializers.ModelSerializer):
 
 
 class TrackSerializer(serializers.ModelSerializer):
-    genres = TrackGenreSerializer(many=True, read_only=True)
+    genres = GenreSerializer(many=True, read_only=True)
 
     class Meta:
         model = Track
@@ -61,14 +58,10 @@ class AlbumDetailSerializer(serializers.ModelSerializer):
             "cover",
             "is_published",
             "tracks",
-            "genre",
             "tracks_count",
             "created_at",
             "updated_at",
         )
-    
-    def get_tracks_count(self, obj):
-        return obj.tracks_count()
 
 
 class AlbumCreateUpdateSerializer(serializers.ModelSerializer):
@@ -76,7 +69,7 @@ class AlbumCreateUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Album
-        fields = ("name", "artist", "release_date", "cover", "genre", "is_published")
+        fields = ("name", "artist", "release_date", "cover", "is_published")
         read_only_fields = ("id", "slug")
 
     def create(self, validated_data):
